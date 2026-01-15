@@ -1,4 +1,3 @@
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -12,19 +11,20 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        helvetica: ['"Helvetica Neue"', 'sans-serif'],
+        helvetica: ['"Helvetica Neue"', "sans-serif"],
       },
       colors: {
         transparent: "transparent",
-        primary: "#252B37", 
-        primary1: "#D43A48", 
+        primary: "#252B37",
+        buttontext: "#415B2E",
+        primary1: "#D43A48",
         primary2: "#3662D4",
-        primary3: "#FF930F", 
+        primary3: "#FF930F",
         secondary: "#F5F5F5",
         neutral: "#FBE8EA",
         neutral2: "#2D2D2D",
-        "black4": "#0A0D12",
-        "neutral1": "#5B5C5A",
+        black4: "#0A0D12",
+        neutral1: "#5B5C5A",
         "neutral-900": "",
         "neutral-1000": "",
         "neutral-100": "",
@@ -46,12 +46,11 @@ module.exports = {
         "grey-5": "#828282",
         "grey-6": "#F5F7F5",
         "grey-7": "#97989A",
-        "main": "#F7F8F8",
+        main: "#F7F8F8",
         "light-blue": "#4C5F7D",
         "red-1": "#FBE8EA",
-        "orange": "#FF930F",
-        "blue": "#141857",
-
+        orange: "#FF930F",
+        blue: "#141857",
       },
 
       screens: {

@@ -2,11 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ["js", "jsx"],
-  images: {
-   
-  },
+  images: {},
   experimental: {
-    appDir: false,  
+    appDir: false,
   },
   // compiler: {
   //   removeConsole: true
@@ -14,4 +12,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-

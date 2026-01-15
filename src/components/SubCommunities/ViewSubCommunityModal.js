@@ -1,0 +1,110 @@
+import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import Button from "../Button";
+
+const ViewSubCommunityModal = ({ isOpen, onClose, title, data = {} }) => {
+  if (!isOpen || !data) return null;
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = data.images || [];
+  console.log("data images:", data);
+
+  const goToPrevious = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const goToImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-70">
+      <div className="bg-white rounded-3xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 px-6 py-4 bg-white rounded-t-lg">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-black-1">View Details</h2>
+            <button
+              className="text-2xl text-gray-500 hover:text-gray-700"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="flex flex-col">
+            <span className="text-base font-semibold rs-text-capitalize">
+              {data?.title || "N/A"}
+            </span>
+            <span className="text-sm font-semibold">
+              {data?.description || "No description"}
+            </span>
+          </div>
+
+          <div className="flex flex-row items-center gap-2 ">
+            <MapPin />{" "}
+            <span className="text-lg font-medium">
+              {data?.location || "No location provided"}
+            </span>
+          </div>
+
+          <div className="flex flex-row justify-between w-full align-center">
+            <div className="flex flex-col">
+              <p className="text-2xl font-semibold">{data?.members || 0}</p>
+              <p className="text-sm text-gray-600">Members</p>
+            </div>
+            <button className="text-base font-semibold text-buttontext">
+              View all
+            </button>
+          </div>
+
+          {/* Slideshow - Added Only Here */}
+          {images.length > 0 && (
+            <div className="space-y-2">
+              {/* Main Image with Navigation */}
+              <div className="relative group">
+                <img
+                  src={
+                    images[currentImageIndex]?.url || images[currentImageIndex]
+                  }
+                  alt="Community image"
+                  className="object-cover w-full h-48 rounded-xl"
+                />
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={goToPrevious}
+                      className="absolute p-2 transition-opacity -translate-y-1/2 rounded-lg opacity-0 left-2 top-1/2 bg-white/90 group-hover:opacity-100"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-700" />
+                    </button>
+                    <button
+                      onClick={goToNext}
+                      className="absolute p-2 transition-opacity -translate-y-1/2 rounded-lg opacity-0 right-2 top-1/2 bg-white/90 group-hover:opacity-100"
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-700" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          <Button
+            type="button"
+            className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-buttontext border-buttontext text-white hover:text-buttontext  hover:bg-gray-50"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ViewSubCommunityModal;
