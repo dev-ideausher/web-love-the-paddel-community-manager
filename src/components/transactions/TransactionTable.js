@@ -1,5 +1,5 @@
 import { InputWithLabel } from "@/components/ui/InputWithLabel";
-import { SearchIcon } from "lucide-react";
+import { Download, SearchIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,166 +8,145 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import Link from "next/link";
+import { formatDate, downloadCSV } from "@/Utilities/helpers";
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import Loader from "../ui/Loader";
+import { ClipLoader } from "react-spinners";
 import Pagination from "../Paignation";
 import Button from "../Button";
 import Popuplist from "../Popuplist";
 import DeleteModal from "../ui/DeleteModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
-import CreateSubCommunityModal from "./CreateSubCommunityModal";
-import ViewSubCommunityModal from "./ViewSubCommunityModal";
-import EditSubCommunityModal from "./EditSubCommunityModal";
+import StatusChip from "../ui/StatusChip";
+import TransactionFilter from "./TransactionFilter";
 
 const dummyData = [
   {
-    _id: "1",
-    title: "Downtown Paddlers",
-    description:
-      "Local paddling enthusiasts meeting weekly at the downtown club.",
-    dateCreated: "2026-01-10",
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    members: 24,
-    status: "active",
+    _id: "TXN001",
+    transactionId: "#TXN-2026-001",
+    user: {
+      name: "John Doe",
+      avatar: "https://via.placeholder.com/40x40/4F46E5/FFFFFF?text=JD",
+    },
+    match: "Paddling Event Match",
+    amount: 250.0,
+    date: "2026-01-15",
+    status: "completed",
   },
   {
-    _id: "2",
-    title: "River Runners Club",
-    description: "Adventure group for whitewater rafting and kayaking trips.",
-    dateCreated: "2026-01-08",
-    members: 15,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN002",
+    transactionId: "#TXN-2026-002",
+    user: {
+      name: "Jane Smith",
+      avatar: "https://via.placeholder.com/40x40/10B981/FFFFFF?text=JS",
+    },
+    match: "Kayak Tournament",
+    amount: 150.5,
+    date: "2026-01-14",
+    status: "pending",
   },
   {
-    _id: "3",
-    title: "Weekend Warriors",
-    description: "Casual weekend paddlers looking for friendly competitions.",
-    dateCreated: "2026-01-05",
-    members: 32,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN003",
+    transactionId: "#TXN-2026-003",
+    user: {
+      name: "Mike Johnson",
+      avatar: "https://via.placeholder.com/40x40/EF4444/FFFFFF?text=MJ",
+    },
+    match: "River Race Entry",
+    amount: 320.0,
+    date: "2026-01-13",
+    status: "completed",
   },
   {
-    _id: "4",
-    title: "Elite Paddlers",
-    description: "Competitive team training for national championships.",
-    dateCreated: "2026-01-03",
-    members: 8,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN004",
+    transactionId: "#TXN-2026-004",
+    user: {
+      name: "Sarah Wilson",
+      avatar: "https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=SW",
+    },
+    match: "Weekend Warriors Fee",
+    amount: 75.25,
+    date: "2026-01-12",
+    status: "failed",
   },
   {
-    _id: "5",
-    title: "Family Floaters",
-    description: "Family-friendly calm water paddling group.",
-    dateCreated: "2026-01-02",
-    members: 41,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN005",
+    transactionId: "#TXN-2026-005",
+    user: {
+      name: "David Brown",
+      avatar: "https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=DB",
+    },
+    match: "SUP Squad Membership",
+    amount: 99.99,
+    date: "2026-01-11",
+    status: "completed",
   },
   {
-    _id: "6",
-    title: "Night Paddlers",
-    description: "Evening paddling sessions under the city lights.",
-    dateCreated: "2025-12-28",
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    members: 12,
-    status: "active",
+    _id: "TXN006",
+    transactionId: "#TXN-2026-006",
+    user: {
+      name: "Emily Davis",
+      avatar: "https://via.placeholder.com/40x40/06B6D4/FFFFFF?text=ED",
+    },
+    match: "Night Paddlers Gear",
+    amount: 189.75,
+    date: "2026-01-10",
+    status: "pending",
   },
   {
-    _id: "7",
-    title: "Kayak Kings",
-    description: "Kayak-only group exploring local rivers and lakes.",
-    dateCreated: "2025-12-25",
-    members: 19,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN007",
+    transactionId: "#TXN-2026-007",
+    user: {
+      name: "Chris Lee",
+      avatar: "https://via.placeholder.com/40x40/EC4899/FFFFFF?text=CL",
+    },
+    match: "Elite Paddlers Entry",
+    amount: 450.0,
+    date: "2026-01-09",
+    status: "completed",
   },
   {
-    _id: "8",
-    title: "Canoe Collective",
-    description: "Traditional canoe enthusiasts preserving the craft.",
-    dateCreated: "2025-12-20",
-    members: 7,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN008",
+    transactionId: "#TXN-2026-008",
+    user: {
+      name: "Lisa Garcia",
+      avatar: "https://via.placeholder.com/40x40/F97316/FFFFFF?text=LG",
+    },
+    match: "Family Floaters Pass",
+    amount: 120.0,
+    date: "2026-01-08",
+    status: "completed",
   },
   {
-    _id: "9",
-    title: "SUP Squad",
-    description: "Stand-up paddleboarders uniting for group sessions.",
-    dateCreated: "2025-12-15",
-    members: 28,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN009",
+    transactionId: "#TXN-2026-009",
+    user: {
+      name: "Tom Anderson",
+      avatar: "https://via.placeholder.com/40x40/14B8A6/FFFFFF?text=TA",
+    },
+    match: "Canoe Collective Fee",
+    amount: 85.5,
+    date: "2026-01-07",
+    status: "cancelled",
   },
   {
-    _id: "10",
-    title: "Paddle Pros",
-    description: "Professional paddlers networking and sharing techniques.",
-    dateCreated: "2025-12-10",
-    members: 5,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "11",
-    title: "Lake Lappers",
-    description: "Lake-focused paddlers doing laps and endurance training.",
-    dateCreated: "2025-12-05",
-    members: 16,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
+    _id: "TXN010",
+    transactionId: "#TXN-2026-010",
+    user: {
+      name: "Rachel Taylor",
+      avatar: "https://via.placeholder.com/40x40/7C3AED/FFFFFF?text=RT",
+    },
+    match: "Paddle Pros Workshop",
+    amount: 175.0,
+    date: "2026-01-06",
+    status: "completed",
   },
 ];
 
-const SubCommunitiesTable = () => {
+const TransactionTable = () => {
+  const [filter, setFilter] = useState("all");
   const [isClient, setIsClient] = useState(false);
   const [allData, setAllData] = useState(dummyData);
   const [filteredData, setFilteredData] = useState(dummyData);
@@ -234,8 +213,9 @@ const SubCommunitiesTable = () => {
     const timeoutId = setTimeout(() => {
       const filtered = dummyData.filter(
         (item) =>
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.match.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       setFilteredData(filtered);
@@ -360,12 +340,7 @@ const SubCommunitiesTable = () => {
   return (
     <div>
       <Loader loading={loading} />
-      <CreateSubCommunityModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSave={handleCreateCommunity}
-        isLoading={isProcessing}
-      />
+
       {/* Delete Modal */}
       <DeleteModal
         isOpen={showDeleteModal}
@@ -374,38 +349,6 @@ const SubCommunitiesTable = () => {
         isProcessing={isProcessing}
         title="Delete this Sub Community?"
         message="Are you sure you want to delete this community? This action cannot be undone."
-      />
-
-      {/* View Modal */}
-      <ViewSubCommunityModal
-        isOpen={showViewModal}
-        onClose={() => setShowViewModal(false)}
-        title={`${selectedItem?.title || ""} Details`}
-        data={selectedItem}
-      />
-
-      {/* Edit Modal */}
-      <EditSubCommunityModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleEditSave}
-        title={`Edit ${selectedItem?.title || ""}`}
-        initialData={selectedItem || {}}
-        isLoading={isProcessing}
-        fields={[
-          { key: "title", label: "Community Name", required: true },
-          { key: "description", label: "Description", required: true },
-          {
-            key: "status",
-            label: "Status",
-            type: "select",
-            required: true,
-            options: [
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ],
-          },
-        ]}
       />
 
       {/* Inactive Confirmation Modal */}
@@ -425,24 +368,20 @@ const SubCommunitiesTable = () => {
           placeholder="Search by title or description"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md rounded-full text-zinc-500"
+          className="max-w-md rounded-3xl text-zinc-500"
           iconType={"pre"}
         >
           <SearchIcon />
         </InputWithLabel>
+        <div className="flex flex-row items-center justify-center gap-6">
+          <TransactionFilter value={filter} onFilterChange={setFilter} />
 
-        <div className="flex gap-6">
           <Button
             className="flex gap-1 py-3 whitespace-nowrap"
             onClick={() => setShowCreateModal(true)}
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M9.16699 9.16699V4.16699H10.8337V9.16699H15.8337V10.8337H10.8337V15.8337H9.16699V10.8337H4.16699V9.16699H9.16699Z"
-                fill="white"
-              />
-            </svg>
-            New Sub-Community
+            <Download />
+            Download CSV
           </Button>
         </div>
       </div>
@@ -461,19 +400,22 @@ const SubCommunitiesTable = () => {
                 S.No
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Community Name
+                Transaction ID
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Description
+                User
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Date Created
+                Match
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Members
+                Amount
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Action
+                Date
+              </TableHead>
+              <TableHead className="text-sm font-normal text-left text-white">
+                status
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -492,58 +434,40 @@ const SubCommunitiesTable = () => {
             ) : (
               currentPageData.map((item, index) => (
                 <TableRow key={item._id} className="bg-white hover:bg-gray-50">
-                  <TableCell>
+                  <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
                       {(pagination.page - 1) * pagination.limit + index + 1}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <span className="block max-w-xs text-sm font-normal font-medium truncate text-black-3">
-                      {item?.title || "N/A"}
+                  <TableCell className="text-left">
+                    <span className="text-sm font-normal font-medium truncate text-black-3">
+                      {item.transactionId || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-normal text-black-3 truncate max-w-[150px]">
+                        {item.user?.name || "Unknown User"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-left">
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item?.description || "N/A"}
+                      {item.match || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
+                    <span className="text-sm font-normal font-medium text-black-3">
+                      ${item.amount?.toFixed(2) || "0.00"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
-                      {item?.dateCreated || "N/A"}
+                      {item.date || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-normal text-black-3">
-                      {item?.members || 0}
-                    </span>
-                  </TableCell>
-                  <TableCell className="flex items-center">
-                    <Popuplist>
-                      <span
-                        onClick={() => openViewModal(item)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
-                      >
-                        View
-                      </span>
-                      <span
-                        onClick={() => openEditModal(item)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
-                      >
-                        Edit
-                      </span>
-                      <span
-                        onClick={() => openInactiveModal(item)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
-                      >
-                        Inactive
-                      </span>
-                      <span
-                        onClick={() => openDeleteModal(item._id)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-red-600 rounded-lg cursor-pointer hover:text-red-700 hover:bg-red-50"
-                      >
-                        Delete
-                      </span>
-                    </Popuplist>
+                  <TableCell className="text-left">
+                    <StatusChip status={item.status || "pending"} />
                   </TableCell>
                 </TableRow>
               ))
@@ -557,4 +481,4 @@ const SubCommunitiesTable = () => {
   );
 };
 
-export default SubCommunitiesTable;
+export default TransactionTable;

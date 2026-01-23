@@ -18,6 +18,8 @@ const sidebarBtns = [
     name: "Announcements",
     path: "/announcements",
   },
+  { name: "Matches", path: "/matches" },
+
   { name: "Transactions", path: "/transactions" },
   { name: "Settings", path: "/settings" },
 ];
@@ -61,17 +63,17 @@ export default function Navbar() {
   };
 
   return (
-    <div className="h-full bg-white min-h-screen flex flex-col shadow-sm">
+    <div className="flex flex-col h-full min-h-screen bg-white shadow-sm">
       <div className="pt-2">
         <Link href="/admin">
           <img
             src={"/images/logo with bg.png"}
             alt="love the padel Logo"
-            className="w-60 mx-auto "
+            className="mx-auto w-60 "
           />
         </Link>
       </div>
-      <div className=" mt-4 flex flex-col items-center justify-center  space-y-3 w-full">
+      <div className="flex flex-col items-center justify-center w-full mt-4 space-y-3 ">
         <div className="flex flex-col w-full">
           {isReady ? (
             sidebarBtns.map(({ name, path }) => {
@@ -109,9 +111,9 @@ export default function Navbar() {
 
       <button
         onClick={handleLogout}
-        className="sidebarBtn h-9 flex items-center gap-2 hover:bg-primary-2 cursor-pointer"
+        className="flex items-center gap-2 cursor-pointer sidebarBtn h-9 hover:bg-primary-2"
       >
-        <p className="text-primary-6 text-body-1 text-base">Logout</p>
+        <p className="text-base text-primary-6 text-body-1">Logout</p>
       </button>
     </div>
   );

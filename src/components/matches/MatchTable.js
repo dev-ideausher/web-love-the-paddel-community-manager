@@ -235,7 +235,7 @@ const SubCommunitiesTable = () => {
       const filtered = dummyData.filter(
         (item) =>
           item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.description.toLowerCase().includes(searchTerm.toLowerCase()),
       );
 
       setFilteredData(filtered);
@@ -254,7 +254,7 @@ const SubCommunitiesTable = () => {
     const paginatedData = getPaginatedData(
       filteredData,
       pagination.page,
-      pagination.limit
+      pagination.limit,
     );
     setAllData(paginatedData);
   }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
@@ -294,7 +294,7 @@ const SubCommunitiesTable = () => {
 
       // Filter from original data and re-paginate
       const newFiltered = filteredData.filter(
-        (item) => item._id !== selectedDelete
+        (item) => item._id !== selectedDelete,
       );
       setFilteredData(newFiltered);
 
@@ -320,8 +320,10 @@ const SubCommunitiesTable = () => {
 
       setFilteredData((prev) =>
         prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, status: "inactive" } : item
-        )
+          item._id === selectedItem._id
+            ? { ...item, status: "inactive" }
+            : item,
+        ),
       );
       setShowInactiveModal(false);
     } catch (error) {
@@ -339,8 +341,8 @@ const SubCommunitiesTable = () => {
 
       setFilteredData((prev) =>
         prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, ...updatedData } : item
-        )
+          item._id === selectedItem._id ? { ...item, ...updatedData } : item,
+        ),
       );
       setShowEditModal(false);
     } catch (error) {
@@ -354,7 +356,7 @@ const SubCommunitiesTable = () => {
   const currentPageData = getPaginatedData(
     filteredData,
     pagination.page,
-    pagination.limit
+    pagination.limit,
   );
 
   return (
@@ -498,7 +500,7 @@ const SubCommunitiesTable = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="block max-w-xs text-sm font-normal font-medium truncate text-black-3">
+                    <span className="block max-w-xs text-sm font-normal truncate text-black-3">
                       {item?.title || "N/A"}
                     </span>
                   </TableCell>

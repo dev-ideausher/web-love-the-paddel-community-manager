@@ -1,11 +1,10 @@
-import Dashboard from "@/components/dashboard/Dashboard";
 import Layout from "@/layout/Layout";
 import React from "react";
 
 const index = () => {
   return (
-    <Layout title="Dashboard ">
-      <Dashboard />
+    <Layout title="Matches ">
+      <div>Matches Page</div>
     </Layout>
   );
 };

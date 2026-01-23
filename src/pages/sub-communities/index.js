@@ -1,4 +1,3 @@
-import NotificationsTable from "@/components/notificationManagement/NotificationsTable";
 import SubCommunitiesTable from "@/components/SubCommunities/SubCommunitiesTable";
 import Layout from "@/layout/Layout";
 import React from "react";

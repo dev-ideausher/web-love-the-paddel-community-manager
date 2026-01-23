@@ -1,4 +1,4 @@
-import DiscountTable from "@/components/Dashboard";
+import DiscountTable from "@/components/dashboard/Dashboard";
 import Layout from "@/layout/Layout";
 import React from "react";
 
