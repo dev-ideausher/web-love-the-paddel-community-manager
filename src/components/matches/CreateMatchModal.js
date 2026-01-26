@@ -1,301 +1,204 @@
-import { useState, useCallback, useEffect } from "react";
-import { X, Upload, Image, Trash2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-const subCommunities = [
-  "General",
-  "Events",
-  "Support",
-  "Announcements",
-  "Media",
-];
-const CreateAnnouncementModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  isLoading = false,
-}) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    subCommunity: "",
-  });
 
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [errors, setErrors] = useState({});
+const EMPTY_FORM = {
+  matchName: "",
+  subCommunity: "",
+  duration: "",
+  matchType: "",
+  matchMode: "",
+  skillRange: [],
+  date: "",
+  time: "",
+  maxPlayers: "",
+};
 
-  // Handle form input changes
-  const handleInputChange = useCallback(
-    (key, value) => {
-      setFormData((prev) => ({ ...prev, [key]: value }));
-      if (errors[key]) {
-        setErrors((prev) => ({ ...prev, [key]: "" }));
-      }
-    },
-    [errors],
-  );
+const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
 
-  // Handle image selection
-  const handleImageSelect = useCallback(
-    (e) => {
-      const files = Array.from(e.target.files);
-      const newImages = [];
-      const newPreviews = [];
+const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
-      files.forEach((file) => {
-        if (
-          file.type.startsWith("image/") &&
-          images.length + newImages.length < 20
-        ) {
-          newImages.push(file);
-          newPreviews.push(URL.createObjectURL(file));
-        }
-      });
-
-      setImages((prev) => [...prev, ...newImages]);
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
-    },
-    [images.length],
-  );
-
-  // Remove image
-  const removeImage = useCallback((index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => {
-      const newPreviews = prev.filter((_, i) => i !== index);
-      // Cleanup revoked URLs
-      prev[index] && URL.revokeObjectURL(prev[index]);
-      return newPreviews;
-    });
-  }, []);
-
-  // Validate form
-  const validateForm = useCallback(() => {
-    const newErrors = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Community name is required";
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    }
-    if (formData.title.trim().length < 3) {
-      newErrors.title = "Community name must be at least 3 characters";
-    }
-    if (formData.description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData]);
-
-  // Handle form submission
-  const handleSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      if (!validateForm()) return;
-
-      onSave({
-        ...formData,
-        images,
-      });
-    },
-    [formData, images, onSave, validateForm],
-  );
-
-  // Cleanup image previews on unmount
   useEffect(() => {
-    return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-    };
+    if (isOpen) {
+      setFormData(EMPTY_FORM); // reset every time modal opens
+    }
+  }, [isOpen]);
+
+  const handleChange = useCallback((key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const toggleSkill = (skill) => {
+    setFormData((prev) => ({
+      ...prev,
+      skillRange: prev.skillRange.includes(skill)
+        ? prev.skillRange.filter((s) => s !== skill)
+        : [...prev.skillRange, skill],
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
 
   if (!isOpen) return null;
 
+  const inputStyle =
+    "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition";
+
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-60 p-4">
-      <div className="w-2/5 bg-white rounded-2xl shadow-2xl  max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 px-8 py-6 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Create announcement
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 transition-colors rounded-full hover:bg-gray-100"
-              disabled={isLoading}
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
+        <div className="sticky top-0 px-6 py-4 bg-white border-b rounded-t-lg">
+          <h2 className="text-xl font-semibold text-gray-900">Create Match</h2>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto">
-          <div className="space-y-6">
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Title *
-              </label>
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+          <Field label="Match Name">
+            <input
+              value={formData.matchName}
+              onChange={(e) => handleChange("matchName", e.target.value)}
+              className={inputStyle}
+              placeholder="Enter match name"
+            />
+          </Field>
+
+          <Field label="Sub Community">
+            <select
+              value={formData.subCommunity}
+              onChange={(e) => handleChange("subCommunity", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Downtown Paddle Club</option>
+              <option>City Sports Hub</option>
+            </select>
+          </Field>
+
+          <Field label="Match Duration">
+            <select
+              value={formData.duration}
+              onChange={(e) => handleChange("duration", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>30 mins</option>
+              <option>60 mins</option>
+              <option>90 mins</option>
+            </select>
+          </Field>
+
+          <Field label="Match Type">
+            <select
+              value={formData.matchType}
+              onChange={(e) => handleChange("matchType", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Verified</option>
+              <option>Unverified</option>
+            </select>
+          </Field>
+
+          <Field label="Match Mode">
+            <select
+              value={formData.matchMode}
+              onChange={(e) => handleChange("matchMode", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Friendly</option>
+              <option>Competitive</option>
+            </select>
+          </Field>
+
+          <Field label="Skill Level Range">
+            <div className="flex flex-wrap gap-2">
+              {SKILLS.map((skill) => {
+                const selected = formData.skillRange.includes(skill);
+
+                return (
+                  <button
+                    type="button"
+                    key={skill}
+                    onClick={() => toggleSkill(skill)}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition
+                      ${
+                        selected
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                      }`}
+                  >
+                    {skill}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Date">
               <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.title ? "border-red-300" : "border-gray-200"
-                }`}
-                placeholder="Enter community name"
-                disabled={isLoading}
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleChange("date", e.target.value)}
+                className={inputStyle}
               />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-              )}
-            </div>
+            </Field>
 
-            {/* Description */}
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Content *
-              </label>
-              <textarea
-                rows={4}
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                className={`w-full px-4 py-3 border rounded-xl resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.description ? "border-red-300" : "border-gray-200"
-                }`}
-                placeholder="Describe your community..."
-                disabled={isLoading}
+            <Field label="Time">
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => handleChange("time", e.target.value)}
+                className={inputStyle}
               />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.description}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Sub Community *
-              </label>
-
-              <select
-                value={formData.subCommunity}
-                onChange={(e) =>
-                  handleInputChange("subCommunity", e.target.value)
-                }
-                className={`w-full px-4 py-3 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.subCommunity ? "border-red-300" : "border-gray-200"
-                }`}
-                disabled={isLoading}
-              >
-                <option value="" disabled>
-                  Select a sub community
-                </option>
-
-                {subCommunities.map((option, idx) => (
-                  <option key={idx} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-
-              {errors.subCommunity && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.subCommunity}
-                </p>
-              )}
-            </div>
-
-            {/* Images Upload */}
-            <div>
-              <label className="block mb-3 text-sm font-semibold text-gray-700">
-                Community Images (Max 20)
-              </label>
-              <div className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  disabled={images.length >= 20 || isLoading}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`cursor-pointer inline-flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all ${
-                    images.length >= 20 || isLoading
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                  }`}
-                >
-                  <Upload className="w-5 h-5" />
-                  {images.length >= 20
-                    ? "Maximum images reached"
-                    : `Add images (${images.length}/20)`}
-                </label>
-              </div>
-
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 mt-6 sm:grid-cols-3 md:grid-cols-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="object-cover w-full h-24 rounded-xl"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                        disabled={isLoading}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            </Field>
           </div>
-        </form>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 px-8 py-6 bg-white border-t border-gray-200 rounded-3xl">
-          <div className="flex justify-end gap-3">
+          <Field label="Max Players">
+            <input
+              type="number"
+              value={formData.maxPlayers}
+              onChange={(e) => handleChange("maxPlayers", e.target.value)}
+              className={inputStyle}
+              placeholder="16"
+            />
+          </Field>
+
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
-              className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-white border-buttontext text-buttontext  hover:bg-gray-50"
               onClick={onClose}
-              disabled={isLoading}
+              className="flex-1 text-gray-900 bg-gray-100 rounded-full"
             >
               Cancel
             </Button>
+
             <Button
               type="submit"
-              className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
               disabled={isLoading}
+              className="flex-1 rounded-full"
             >
-              {isLoading ? (
-                <ClipLoader color="white" size={20} />
-              ) : (
-                <Image className="w-4 h-4" />
-              )}
-              {isLoading ? "Creating..." : "Create Announcement"}
+              {isLoading ? <ClipLoader size={18} color="white" /> : "Create"}
             </Button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
 
-export default CreateAnnouncementModal;
+const Field = ({ label, children }) => (
+  <div className="flex flex-col space-y-1">
+    <label className="text-sm font-medium text-gray-900">
+      {label} <span className="text-red-500">*</span>
+    </label>
+    {children}
+  </div>
+);
+
+export default CreateMatchModal;

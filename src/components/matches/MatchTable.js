@@ -16,9 +16,10 @@ import Button from "../Button";
 import Popuplist from "../Popuplist";
 import DeleteModal from "../ui/DeleteModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
-import CreateSubCommunityModal from "./CreateSubCommunityModal";
-import ViewSubCommunityModal from "./ViewSubCommunityModal";
-import EditSubCommunityModal from "./EditSubCommunityModal";
+import CreateMatchModal from "./CreateMatchModal";
+import ViewMatchModal from "./ViewMatchModal";
+import EditMatchModal from "./EditMatchModal";
+import StatusChip from "../ui/StatusChip";
 
 const dummyData = [
   {
@@ -167,7 +168,7 @@ const dummyData = [
   },
 ];
 
-const SubCommunitiesTable = () => {
+const MatchTable = () => {
   const [isClient, setIsClient] = useState(false);
   const [allData, setAllData] = useState(dummyData);
   const [filteredData, setFilteredData] = useState(dummyData);
@@ -306,7 +307,7 @@ const SubCommunitiesTable = () => {
 
       closeDeleteModal();
     } catch (error) {
-      console.error("Failed to delete sub-community:", error);
+      console.error("Failed to delete match:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -327,7 +328,7 @@ const SubCommunitiesTable = () => {
       );
       setShowInactiveModal(false);
     } catch (error) {
-      console.error("Failed to inactive sub-community:", error);
+      console.error("Failed to inactive match:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -346,7 +347,7 @@ const SubCommunitiesTable = () => {
       );
       setShowEditModal(false);
     } catch (error) {
-      console.error("Failed to update sub-community:", error);
+      console.error("Failed to update match:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -362,7 +363,7 @@ const SubCommunitiesTable = () => {
   return (
     <div>
       <Loader loading={loading} />
-      <CreateSubCommunityModal
+      <CreateMatchModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSave={handleCreateCommunity}
@@ -379,7 +380,7 @@ const SubCommunitiesTable = () => {
       />
 
       {/* View Modal */}
-      <ViewSubCommunityModal
+      <ViewMatchModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
         title={`${selectedItem?.title || ""} Details`}
@@ -387,7 +388,7 @@ const SubCommunitiesTable = () => {
       />
 
       {/* Edit Modal */}
-      <EditSubCommunityModal
+      <EditMatchModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSave={handleEditSave}
@@ -444,7 +445,7 @@ const SubCommunitiesTable = () => {
                 fill="white"
               />
             </svg>
-            New Sub-Community
+            New match
           </Button>
         </div>
       </div>
@@ -463,19 +464,22 @@ const SubCommunitiesTable = () => {
                 S.No
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Community Name
+                Match Name
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Description
+                Sub-community
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Date Created
+                Date and Time
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Members
+                Players
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Action
+                Status
+              </TableHead>
+              <TableHead className="text-sm font-normal text-left text-white">
+                Actions
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -519,6 +523,11 @@ const SubCommunitiesTable = () => {
                       {item?.members || 0}
                     </span>
                   </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-normal text-black-3">
+                      <StatusChip status={item?.status || "inactive"} />
+                    </span>
+                  </TableCell>
                   <TableCell className="flex items-center">
                     <Popuplist>
                       <span
@@ -559,4 +568,4 @@ const SubCommunitiesTable = () => {
   );
 };
 
-export default SubCommunitiesTable;
+export default MatchTable;

@@ -1,127 +1,73 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-import { X, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Cross, CrossIcon } from "lucide-react";
 
-const EditSubCommunityModal = ({
+const EditMatchModal = ({
   isOpen,
   onClose,
   onSave,
-  title,
   initialData = {},
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    status: "active",
+    matchName: "",
+    subCommunity: "",
+    duration: "",
+    matchType: "",
+    matchMode: "",
+    skillRange: [],
+    date: "",
+    time: "",
+    maxPlayers: "",
   });
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [errors, setErrors] = useState({});
+  const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
+  const toggleSkill = (skill) => {
+    setFormData((prev) => ({
+      ...prev,
+      skillRange: prev.skillRange.includes(skill)
+        ? prev.skillRange.filter((s) => s !== skill)
+        : [...prev.skillRange, skill],
+    }));
+  };
 
-  // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen && initialData) {
       setFormData({
-        title: initialData.title || "",
-        description: initialData.description || "",
-        status: initialData.status || "active",
+        matchName: initialData.matchName || "",
+        subCommunity: initialData.subCommunity || "",
+        duration: initialData.duration || "",
+        matchType: initialData.matchType || "",
+        matchMode: initialData.matchMode || "",
+        skillRange: initialData.skillRange || [],
+        date: initialData.date || "",
+        time: initialData.time || "",
+        maxPlayers: initialData.maxPlayers || "",
       });
-      setImages([]);
-      setImagePreviews([]);
     }
   }, [isOpen, initialData]);
 
-  const handleInputChange = useCallback(
-    (key, value) => {
-      setFormData((prev) => ({ ...prev, [key]: value }));
-      if (errors[key]) {
-        setErrors((prev) => ({ ...prev, [key]: "" }));
-      }
-    },
-    [errors],
-  );
-
-  const handleImageSelect = useCallback(
-    (e) => {
-      const files = Array.from(e.target.files);
-      const newImages = [];
-      const newPreviews = [];
-
-      files.forEach((file) => {
-        if (
-          file.type.startsWith("image/") &&
-          images.length + newImages.length <= 20
-        ) {
-          newImages.push(file);
-          newPreviews.push(URL.createObjectURL(file));
-        }
-      });
-
-      setImages((prev) => [...prev, ...newImages]);
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
-    },
-    [images.length],
-  );
-
-  const removeImage = useCallback((index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => {
-      const preview = prev[index];
-      if (preview) URL.revokeObjectURL(preview);
-      return prev.filter((_, i) => i !== index);
-    });
+  const handleChange = useCallback((key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  const validateForm = useCallback(() => {
-    const newErrors = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Community name is required";
-    } else if (formData.title.trim().length < 3) {
-      newErrors.title = "Name must be at least 3 characters";
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    } else if (formData.description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData]);
-
-  const handleSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      if (!validateForm()) return;
-
-      onSave({
-        ...formData,
-        images: images.length > 0 ? images : null, // Send new images or null if none added
-      });
-    },
-    [formData, images, onSave, validateForm],
-  );
-
-  // Cleanup previews on unmount
-  useEffect(() => {
-    return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-    };
-  }, []);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
 
   if (!isOpen) return null;
 
+  const inputStyle =
+    "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-70">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="sticky top-0 px-6 py-4 bg-white border-b rounded-t-lg">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-black-1">{title}</h2>
+            <h2 className="text-xl font-semibold text-black-1">Edit Match</h2>
             <button
               className="text-2xl text-gray-500 hover:text-gray-700"
               onClick={onClose}
@@ -131,145 +77,136 @@ const EditSubCommunityModal = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-6 space-y-6">
-            {/* Community Name */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Community Name <span className="text-red-500">*</span>
-              </label>
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+          <Field label="Match Name">
+            <input
+              value={formData.matchName}
+              onChange={(e) => handleChange("matchName", e.target.value)}
+              className={inputStyle}
+              placeholder="Enter match name"
+            />
+          </Field>
+
+          <Field label="Sub Community">
+            <select
+              value={formData.subCommunity}
+              onChange={(e) => handleChange("subCommunity", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Downtown Paddle Club</option>
+              <option>City Sports Hub</option>
+            </select>
+          </Field>
+
+          <Field label="Match Duration">
+            <select
+              value={formData.duration}
+              onChange={(e) => handleChange("duration", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>30 mins</option>
+              <option>60 mins</option>
+              <option>90 mins</option>
+            </select>
+          </Field>
+
+          <Field label="Match Type">
+            <select
+              value={formData.matchType}
+              onChange={(e) => handleChange("matchType", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Verified</option>
+              <option>Unverified</option>
+            </select>
+          </Field>
+
+          <Field label="Match Mode">
+            <select
+              value={formData.matchMode}
+              onChange={(e) => handleChange("matchMode", e.target.value)}
+              className={inputStyle}
+            >
+              <option value="">Select</option>
+              <option>Friendly</option>
+              <option>Competitive</option>
+            </select>
+          </Field>
+
+          <Field label="Skill Level Range">
+            <div className="flex flex-wrap gap-2">
+              {SKILLS.map((skill) => {
+                const selected = formData.skillRange.includes(skill);
+
+                return (
+                  <button
+                    type="button"
+                    key={skill}
+                    onClick={() => toggleSkill(skill)}
+                    className={`
+            px-3 py-1.5 rounded-full text-sm border transition
+            ${
+              selected
+                ? "bg-black text-white border-black"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+            }
+          `}
+                  >
+                    {skill}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Date">
               <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
-                  errors.title ? "border-red-300" : "border-gray-300"
-                }`}
-                placeholder="Enter community name"
-                disabled={isLoading}
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleChange("date", e.target.value)}
+                className={inputStyle}
               />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-              )}
-            </div>
+            </Field>
 
-            {/* Description */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                rows={4}
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-vertical ${
-                  errors.description ? "border-red-300" : "border-gray-300"
-                }`}
-                placeholder="Describe your community..."
-                disabled={isLoading}
+            <Field label="Time">
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => handleChange("time", e.target.value)}
+                className={inputStyle}
               />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.description}
-                </p>
-              )}
-            </div>
-
-            {/* Status */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Status <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleInputChange("status", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                disabled={isLoading}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-
-            {/* Images Upload */}
-            <div>
-              <label className="block mb-3 text-sm font-medium text-gray-700">
-                Community Images (Max 20)
-              </label>
-              <div className="p-6 text-center transition-colors border-2 border-gray-300 border-dashed rounded-xl hover:border-gray-400">
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  disabled={images.length >= 20 || isLoading}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium cursor-pointer transition-all ${
-                    images.length >= 20 || isLoading
-                      ? "text-gray-400 cursor-not-allowed bg-gray-100"
-                      : "text-primary hover:bg-primary/10 hover:text-primary/90"
-                  }`}
-                >
-                  <Upload className="w-4 h-4" />
-                  {images.length >= 20
-                    ? "Max reached"
-                    : `Add images (${images.length}/20)`}
-                </label>
-              </div>
-
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="object-cover w-full h-20 rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute flex items-center justify-center w-6 h-6 text-xs text-white transition-all bg-red-500 rounded-full opacity-0 -top-2 -right-2 hover:bg-red-600 group-hover:opacity-100"
-                        disabled={isLoading}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            </Field>
           </div>
 
-          <div className="flex justify-end pt-4 space-x-3 border-t">
+          <Field label="Max Players">
+            <input
+              type="number"
+              value={formData.maxPlayers}
+              onChange={(e) => handleChange("maxPlayers", e.target.value)}
+              className={inputStyle}
+              placeholder="16"
+            />
+          </Field>
+
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
-              className="py-2 px-6 border-2 bg-[#F5F7F5] text-primary rounded-full"
               onClick={onClose}
-              disabled={isLoading}
+              className="flex-1 text-gray-900 bg-gray-100 rounded-full"
             >
               Cancel
             </Button>
+
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-2"
+              className="flex-1 rounded-full"
             >
-              {isLoading ? (
-                <ClipLoader color="white" size={20} />
-              ) : (
-                <>
-                  <ImageIcon className="w-4 h-4" />
-                  Save Changes
-                </>
-              )}
+              {isLoading ? <ClipLoader size={18} color="white" /> : "Save"}
             </Button>
           </div>
         </form>
@@ -278,4 +215,13 @@ const EditSubCommunityModal = ({
   );
 };
 
-export default EditSubCommunityModal;
+const Field = ({ label, children }) => (
+  <div className="flex flex-col space-y-1">
+    <label className="text-sm font-medium text-gray-900">
+      {label} <span className="text-red-500">*</span>
+    </label>
+    {children}
+  </div>
+);
+
+export default EditMatchModal;
