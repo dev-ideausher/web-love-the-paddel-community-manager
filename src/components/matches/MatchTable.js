@@ -375,8 +375,8 @@ const MatchTable = () => {
         onClose={closeDeleteModal}
         onConfirm={handleDeleteConfirm}
         isProcessing={isProcessing}
-        title="Delete this Sub Community?"
-        message="Are you sure you want to delete this community? This action cannot be undone."
+        title="Delete this Match?"
+        message="Are you sure you want to delete this match? This action cannot be undone."
       />
 
       {/* View Modal */}
@@ -416,7 +416,7 @@ const MatchTable = () => {
         isOpen={showInactiveModal}
         onClose={() => setShowInactiveModal(false)}
         onConfirm={handleInactiveConfirm}
-        title="Inactive Sub Community?"
+        title="Cancel this match??"
         message={`Are you sure you want to make "${selectedItem?.title}" inactive?`}
         confirmText="Yes, make inactive"
         cancelText="Cancel"

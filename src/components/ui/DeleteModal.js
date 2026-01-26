@@ -36,7 +36,11 @@ const DeleteModal = ({
           >
             {cancelText}
           </Button>
-          <Button onClick={onConfirm} disabled={isProcessing}>
+          <Button
+            className={"bg-red-500"}
+            onClick={onConfirm}
+            disabled={isProcessing}
+          >
             {isProcessing ? (
               <ClipLoader color="white" size={20} />
             ) : (
