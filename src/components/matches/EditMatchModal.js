@@ -7,17 +7,20 @@ const EditMatchModal = ({
   isOpen,
   onClose,
   onSave,
+  subCommunitiesData,
   initialData = {},
   isLoading = false,
 }) => {
+  const [subCommunities, setSubcommunities] = useState([]);
   const [formData, setFormData] = useState({
     matchName: "",
-    subCommunity: "",
+    subCommunity: {},
     duration: "",
     matchType: "",
     matchMode: "",
     skillRange: [],
     date: "",
+    startTime: "",
     time: "",
     maxPlayers: "",
   });
@@ -32,20 +35,24 @@ const EditMatchModal = ({
   };
 
   useEffect(() => {
+    console.log(initialData);
+    setSubcommunities(subCommunitiesData);
     if (isOpen && initialData) {
       setFormData({
-        matchName: initialData.matchName || "",
-        subCommunity: initialData.subCommunity || "",
+        matchName: initialData.name || "",
+        subCommunity: initialData.community || {},
         duration: initialData.duration || "",
-        matchType: initialData.matchType || "",
+        matchType: initialData.currentVerificationStatus || "",
         matchMode: initialData.matchMode || "",
-        skillRange: initialData.skillRange || [],
+        skillRange: initialData.skills || [],
         date: initialData.date || "",
         time: initialData.time || "",
-        maxPlayers: initialData.maxPlayers || "",
+        startTime: initialData.startTime || "",
+        endTime: initialData.endTime || "",
+        maxPlayers: initialData.playersRequired || "",
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, subCommunitiesData]);
 
   const handleChange = useCallback((key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -89,13 +96,21 @@ const EditMatchModal = ({
 
           <Field label="Sub Community">
             <select
-              value={formData.subCommunity}
-              onChange={(e) => handleChange("subCommunity", e.target.value)}
+              value={formData.subCommunity?._id || ""}
+              onChange={(e) => {
+                const selected = subCommunities.find(
+                  (item) => item._id === e.target.value,
+                );
+                handleChange("subCommunity", selected || {});
+              }}
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option>Downtown Paddle Club</option>
-              <option>City Sports Hub</option>
+              {subCommunities.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </Field>
 
@@ -119,8 +134,8 @@ const EditMatchModal = ({
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option>Verified</option>
-              <option>Unverified</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
             </select>
           </Field>
 
@@ -131,8 +146,9 @@ const EditMatchModal = ({
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option>Friendly</option>
-              <option>Competitive</option>
+              <option value={"social"}>Social</option>
+              <option value={"competitive"}>Competitive</option>
+              <option value={"league"}>League</option>
             </select>
           </Field>
 
@@ -164,10 +180,13 @@ const EditMatchModal = ({
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Date">
+              {console.log("date", formData.date)}
               <input
                 type="date"
-                value={formData.date}
-                onChange={(e) => handleChange("date", e.target.value)}
+                value={formData.date.split("T")[0]}
+                onChange={(e) => {
+                  handleChange("date", e.target.value);
+                }}
                 className={inputStyle}
               />
             </Field>
@@ -175,8 +194,10 @@ const EditMatchModal = ({
             <Field label="Time">
               <input
                 type="time"
-                value={formData.time}
-                onChange={(e) => handleChange("time", e.target.value)}
+                value={formData.startTime.slice(11, 16)}
+                onChange={(e) => {
+                  handleChange("time", e.target.value);
+                }}
                 className={inputStyle}
               />
             </Field>

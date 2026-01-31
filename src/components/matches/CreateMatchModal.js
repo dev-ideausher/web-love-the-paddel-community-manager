@@ -3,20 +3,28 @@ import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 
 const EMPTY_FORM = {
-  matchName: "",
+  name: "",
   subCommunity: "",
   duration: "",
   matchType: "",
   matchMode: "",
   skillRange: [],
   date: "",
+  startTime: "",
+  endTime: "",
   time: "",
   maxPlayers: "",
 };
 
 const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
 
-const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
+const CreateMatchModal = ({
+  subCommunities,
+  isOpen,
+  onClose,
+  onSave,
+  isLoading = false,
+}) => {
   const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
@@ -59,8 +67,8 @@ const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
           <Field label="Match Name">
             <input
-              value={formData.matchName}
-              onChange={(e) => handleChange("matchName", e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
               className={inputStyle}
               placeholder="Enter match name"
             />
@@ -68,13 +76,21 @@ const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
 
           <Field label="Sub Community">
             <select
-              value={formData.subCommunity}
-              onChange={(e) => handleChange("subCommunity", e.target.value)}
+              value={formData.subCommunity?._id || ""}
+              onChange={(e) => {
+                const selected = subCommunities.find(
+                  (item) => item._id === e.target.value,
+                );
+                handleChange("subCommunity", selected || {});
+              }}
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option>Downtown Paddle Club</option>
-              <option>City Sports Hub</option>
+              {subCommunities.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </Field>
 
@@ -110,8 +126,9 @@ const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option>Friendly</option>
-              <option>Competitive</option>
+              <option value={"social"}>Social</option>
+              <option value={"competitive"}>Competitive</option>
+              <option value={"league"}>League</option>
             </select>
           </Field>
 
@@ -152,8 +169,11 @@ const CreateMatchModal = ({ isOpen, onClose, onSave, isLoading = false }) => {
             <Field label="Time">
               <input
                 type="time"
-                value={formData.time}
-                onChange={(e) => handleChange("time", e.target.value)}
+                value={formData.startTime}
+                onChange={(e) => {
+                  handleChange("startTime", e.target.value);
+                  console.log(e.target.value);
+                }}
                 className={inputStyle}
               />
             </Field>

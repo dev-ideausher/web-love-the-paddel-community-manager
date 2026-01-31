@@ -14,27 +14,23 @@ export default function Layout({ children, className, title }) {
   return (
     <>
       <div className={cn("wrapper h-screen overflow-hidden flex", className)}>
-        <aside className="w-64 shrink-0 sticky top-0 h-screen overflow-y-auto overscroll-contain z-40">
+        <aside className="sticky top-0 z-40 w-64 h-screen overflow-y-auto shrink-0 overscroll-contain">
           <Navbar />
         </aside>
 
         <main className="flex-1 h-screen overflow-y-auto">
-          <div className="w-full bg-white flex items-center justify-between h-16 pt-5 pb-5 px-8 shadow-lg sticky top-0 z-50">
+          <div className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-8 pt-5 pb-5 bg-white shadow-lg">
             <div className="text-center">
-              <h1 className="font-bold text-black-1 text-xl">{title}</h1>
+              <h1 className="text-xl font-bold text-black-1">{title}</h1>
             </div>
-            <div className="flex items-center space-x-7 bg-neutral-1000 border-neutral-1000 rounded-lg pt-3 pb-3 pr-4 pl-4">
-              <div className="relative">
-                <NotificationDropdown />
-              </div>
+            <div className="flex items-center pt-3 pb-3 pl-4 pr-4 rounded-lg space-x-7 bg-neutral-1000 border-neutral-1000">
+              <div className="relative"></div>
             </div>
           </div>
 
-          <div className="w-full my-4 px-6">{children}</div>
+          <div className="w-full px-6 my-4">{children}</div>
         </main>
       </div>
-
     </>
   );
 }
-

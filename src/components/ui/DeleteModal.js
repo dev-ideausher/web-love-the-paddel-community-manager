@@ -6,6 +6,7 @@ const DeleteModal = ({
   isOpen,
   onClose,
   onConfirm,
+  id,
   title = "Delete this item?",
   message = "Are you sure you want to delete this item?",
   isProcessing = false,
@@ -38,7 +39,7 @@ const DeleteModal = ({
           </Button>
           <Button
             className={"bg-red-500"}
-            onClick={onConfirm}
+            onClick={() => onConfirm(id)}
             disabled={isProcessing}
           >
             {isProcessing ? (

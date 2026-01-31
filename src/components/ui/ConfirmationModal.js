@@ -9,6 +9,7 @@ const ConfirmationModal = ({
   confirmText = "Confirm",
   cancelText = "Cancel",
   isProcessing = false,
+  id,
 }) => {
   if (!isOpen) return null;
 
@@ -35,7 +36,7 @@ const ConfirmationModal = ({
           >
             {cancelText}
           </Button>
-          <Button onClick={onConfirm} disabled={isProcessing}>
+          <Button onClick={() => onConfirm(id)} disabled={isProcessing}>
             Proceed
           </Button>
         </div>

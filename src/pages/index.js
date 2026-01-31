@@ -28,33 +28,30 @@ export default function Index() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    router.push("/dashboard");
-    // setLoading(true)
-    // try {
+    setLoading(true);
+    try {
+      let userAuthData = await loginWithEmailAndPassword(
+        fields.email,
+        fields.password,
+      );
+      console.log("triggered", userAuthData);
 
-    //     let userAuthData = await loginWithEmailAndPassword(fields.email, fields.password)
+      if (userAuthData?.status) {
+        let userData = await userLogin(userAuthData.token);
 
-    //     if (userAuthData?.status) {
-    //         let userData = await userLogin(userAuthData.token)
-
-    //         if (userData.status) {
-    //             setToken(userAuthData.token, userAuthData.expiryTime)
-    //             setUser(userData.data)
-    //             toast.success("Login successful");
-    //             router.push("/user-management");
-    //         }
-
-    //     }
-
-    // }
-    // catch (err) {
-    //     console.error("Login error:", err);
-    //     toast.error(err?.message || "Login failed. Please try again.");
-    // }
-
-    // finally {
-    //     setLoading(false)
-    // }
+        if (userData.status) {
+          setToken(userAuthData.token, userAuthData.expiryTime);
+          setUser(userData.data);
+          toast.success("Login successful");
+          router.push("/dashboard");
+        }
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error(err?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div
@@ -72,7 +69,7 @@ export default function Index() {
               className="mx-auto"
             />
           </div>
-          <div className="bg-white  rounded-2xl">
+          <div className="bg-white rounded-2xl">
             <div className="max-w-lg px-10 py-12">
               <h2 className="mb-10 text-3xl text-center">Login</h2>
 
@@ -110,22 +107,23 @@ export default function Index() {
                   </div>
                 </label>
 
-                {/* <div className="flex items-center justify-end mb-10">
-                                    <Link
-                                        href="/forgot-password" passHref
-                                        className="text-sm font-normal cursor-pointer text-primary hover:underline"
-                                    >
-                                        Forgot Password?
-                                    </Link>
-                                </div> */}
-                <div
+                <div className="flex items-center justify-end mb-10">
+                  <Link
+                    href="/forgot-password"
+                    passHref
+                    className="text-sm font-normal cursor-pointer text-primary hover:underline"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+                {/* <div
                   onClick={() => router.push("/forgot-password")}
                   className="flex justify-end w-full mt-4"
                 >
                   <span className="text-primary font-medium leading-[150%] text-sm cursor-pointer hover:underline">
                     Forgot Password?
                   </span>
-                </div>
+                </div> */}
                 <ButtonWithLoader
                   type="submit"
                   className={`mt-10 px-20 rounded-[64px] ${

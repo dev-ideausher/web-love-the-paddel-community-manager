@@ -14,26 +14,26 @@ export function middleware(req) {
     "/email-verification",
   ];
 
-  // try {
-  //   const token = req.cookies.get("token");
+  try {
+    const token = req.cookies.get("token");
 
-  //   if (!token) {
-  //     if (publicRoutes.includes(pathname)) {
-  //       return NextResponse.next();
-  //     }
+    if (!token) {
+      if (publicRoutes.includes(pathname)) {
+        return NextResponse.next();
+      }
 
-  //     return NextResponse.redirect(new URL("/", req.url));
-  //   }
+      return NextResponse.redirect(new URL("/", req.url));
+    }
 
-  //   if (token && publicRoutes.includes(pathname)) {
-  //     return NextResponse.redirect(new URL("/user-management", req.url));
-  //   }
+    if (token && publicRoutes.includes(pathname)) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
 
-  //   return NextResponse.next();
-  // } catch (error) {
-  //   console.error("Middleware error:", error);
-  //   return NextResponse.redirect(new URL("/", req.url));
-  // }
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.redirect(new URL("/", req.url));
+  }
 }
 
 export const config = {

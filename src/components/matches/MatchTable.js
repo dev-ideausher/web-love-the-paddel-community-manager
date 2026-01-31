@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { useRouter } from "next/router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Loader from "../ui/Loader";
 import Pagination from "../Paignation";
 import Button from "../Button";
@@ -20,158 +20,20 @@ import CreateMatchModal from "./CreateMatchModal";
 import ViewMatchModal from "./ViewMatchModal";
 import EditMatchModal from "./EditMatchModal";
 import StatusChip from "../ui/StatusChip";
-
-const dummyData = [
-  {
-    _id: "1",
-    title: "Downtown Paddlers",
-    description:
-      "Local paddling enthusiasts meeting weekly at the downtown club.",
-    dateCreated: "2026-01-10",
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    members: 24,
-    status: "active",
-  },
-  {
-    _id: "2",
-    title: "River Runners Club",
-    description: "Adventure group for whitewater rafting and kayaking trips.",
-    dateCreated: "2026-01-08",
-    members: 15,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "3",
-    title: "Weekend Warriors",
-    description: "Casual weekend paddlers looking for friendly competitions.",
-    dateCreated: "2026-01-05",
-    members: 32,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "4",
-    title: "Elite Paddlers",
-    description: "Competitive team training for national championships.",
-    dateCreated: "2026-01-03",
-    members: 8,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "5",
-    title: "Family Floaters",
-    description: "Family-friendly calm water paddling group.",
-    dateCreated: "2026-01-02",
-    members: 41,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "6",
-    title: "Night Paddlers",
-    description: "Evening paddling sessions under the city lights.",
-    dateCreated: "2025-12-28",
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    members: 12,
-    status: "active",
-  },
-  {
-    _id: "7",
-    title: "Kayak Kings",
-    description: "Kayak-only group exploring local rivers and lakes.",
-    dateCreated: "2025-12-25",
-    members: 19,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "8",
-    title: "Canoe Collective",
-    description: "Traditional canoe enthusiasts preserving the craft.",
-    dateCreated: "2025-12-20",
-    members: 7,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "9",
-    title: "SUP Squad",
-    description: "Stand-up paddleboarders uniting for group sessions.",
-    dateCreated: "2025-12-15",
-    members: 28,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "10",
-    title: "Paddle Pros",
-    description: "Professional paddlers networking and sharing techniques.",
-    dateCreated: "2025-12-10",
-    members: 5,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-  {
-    _id: "11",
-    title: "Lake Lappers",
-    description: "Lake-focused paddlers doing laps and endurance training.",
-    dateCreated: "2025-12-05",
-    members: 16,
-    images: [
-      { id: 1, url: "https://via.placeholder.com/300x200?text=Image+1" },
-      { id: 2, url: "https://via.placeholder.com/300x200?text=Image+2" },
-      { id: 3, url: "https://via.placeholder.com/300x200?text=Image+3" },
-    ],
-    status: "active",
-  },
-];
+import {
+  cancelMatch,
+  createMatch,
+  createMatche,
+  deleteMatch,
+  getMatchesList,
+} from "@/services/matchServices";
+import { formatDate } from "@/Utilities/helpers";
+import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const MatchTable = () => {
   const [isClient, setIsClient] = useState(false);
-  const [allData, setAllData] = useState(dummyData);
-  const [filteredData, setFilteredData] = useState(dummyData);
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
@@ -179,6 +41,28 @@ const MatchTable = () => {
     limit: 10,
     totalPages: 1,
   });
+  const [subCommunities, setSubcommunities] = useState([]);
+
+  const fetchSubCommunities = async () => {
+    const res = await getSubCommunitiesList();
+    setSubcommunities(res.data.results);
+  };
+  const fetchData = async () => {
+    await getMatchesList().then((res) => {
+      console.log("Triggered", res);
+
+      setAllData(res.data.results);
+      setPagination({
+        page: res.data.page,
+        limit: res.data.limit,
+        totalPages: res.data.totalPages,
+      });
+    });
+  };
+  useEffect(() => {
+    fetchData();
+    fetchSubCommunities();
+  }, []);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -189,39 +73,20 @@ const MatchTable = () => {
   const [selectedDelete, setSelectedDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const handleCreateCommunity = async (newCommunityData) => {
+  const handleCreateMatch = async (matchData) => {
     setIsProcessing(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await createMatch(matchData).then(() => {
+        fetchData();
+      });
 
-      // Add new community to filtered data (at top)
-      const newCommunity = {
-        _id: Date.now().toString(),
-        ...newCommunityData,
-        dateCreated: new Date().toISOString().split("T")[0],
-        members: 0,
-        status: "active",
-        images: newCommunityData.images.map((img, idx) => ({
-          id: idx,
-          url: URL.createObjectURL(img),
-        })),
-      };
-
-      setFilteredData([newCommunity, ...filteredData]);
       setShowCreateModal(false);
-      setFormData({ title: "", description: "" });
-      setImages([]);
-      setImagePreviews([]);
     } catch (error) {
       console.error("Failed to create community:", error);
     } finally {
       setIsProcessing(false);
     }
   };
-
-  const router = useRouter();
-  let searchTimeout;
 
   // Filter and paginate data
   const getPaginatedData = useCallback((data, page, limit) => {
@@ -233,10 +98,10 @@ const MatchTable = () => {
   // Update filtered data based on search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      const filtered = dummyData.filter(
+      const filtered = allData.filter(
         (item) =>
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase()),
+          item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item?.description?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
 
       setFilteredData(filtered);
@@ -248,17 +113,17 @@ const MatchTable = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, allData]); // <-- include allData
 
   // Update displayed data when pagination or filtered data changes
-  useEffect(() => {
-    const paginatedData = getPaginatedData(
-      filteredData,
-      pagination.page,
-      pagination.limit,
-    );
-    setAllData(paginatedData);
-  }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
+  // useEffect(() => {
+  //   const paginatedData = getPaginatedData(
+  //     filteredData,
+  //     pagination.page,
+  //     pagination.limit,
+  //   );
+  //   setAllData(paginatedData);
+  // }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
 
   // Modal handlers
   const openDeleteModal = (id) => {
@@ -286,13 +151,11 @@ const MatchTable = () => {
     setShowInactiveModal(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (id) => {
     if (!selectedDelete) return;
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await deleteMatch(id);
       // Filter from original data and re-paginate
       const newFiltered = filteredData.filter(
         (item) => item._id !== selectedDelete,
@@ -313,19 +176,20 @@ const MatchTable = () => {
     }
   };
 
-  const handleInactiveConfirm = async () => {
+  const handleInactiveConfirm = async (id) => {
     setIsProcessing(true);
     try {
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await cancelMatch(id);
 
       setFilteredData((prev) =>
         prev.map((item) =>
           item._id === selectedItem._id
-            ? { ...item, status: "inactive" }
+            ? { ...item, status: "cancelled" }
             : item,
         ),
       );
+
       setShowInactiveModal(false);
     } catch (error) {
       console.error("Failed to inactive match:", error);
@@ -336,10 +200,9 @@ const MatchTable = () => {
 
   const handleEditSave = async (updatedData) => {
     setIsProcessing(true);
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    try {
+      console.log(updatedData);
       setFilteredData((prev) =>
         prev.map((item) =>
           item._id === selectedItem._id ? { ...item, ...updatedData } : item,
@@ -366,13 +229,15 @@ const MatchTable = () => {
       <CreateMatchModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSave={handleCreateCommunity}
+        onSave={handleCreateMatch}
+        subCommunities={subCommunities}
         isLoading={isProcessing}
       />
       {/* Delete Modal */}
       <DeleteModal
         isOpen={showDeleteModal}
         onClose={closeDeleteModal}
+        id={selectedDelete}
         onConfirm={handleDeleteConfirm}
         isProcessing={isProcessing}
         title="Delete this Match?"
@@ -389,26 +254,13 @@ const MatchTable = () => {
 
       {/* Edit Modal */}
       <EditMatchModal
+        subCommunitiesData={subCommunities}
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSave={handleEditSave}
         title={`Edit ${selectedItem?.title || ""}`}
         initialData={selectedItem || {}}
         isLoading={isProcessing}
-        fields={[
-          { key: "title", label: "Community Name", required: true },
-          { key: "description", label: "Description", required: true },
-          {
-            key: "status",
-            label: "Status",
-            type: "select",
-            required: true,
-            options: [
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ],
-          },
-        ]}
       />
 
       {/* Inactive Confirmation Modal */}
@@ -416,9 +268,10 @@ const MatchTable = () => {
         isOpen={showInactiveModal}
         onClose={() => setShowInactiveModal(false)}
         onConfirm={handleInactiveConfirm}
-        title="Cancel this match??"
-        message={`Are you sure you want to make "${selectedItem?.title}" inactive?`}
-        confirmText="Yes, make inactive"
+        title="Cancel this match?"
+        id={selectedItem?._id}
+        message={`Are you sure you want to cancel "${selectedItem?.name}"?`}
+        confirmText="Yes, cancel match"
         cancelText="Cancel"
         isProcessing={isProcessing}
       />
@@ -505,7 +358,7 @@ const MatchTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item?.title || "N/A"}
+                      {item?.name || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -515,12 +368,12 @@ const MatchTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm font-normal text-black-3">
-                      {item?.dateCreated || "N/A"}
+                      {formatDate(item?.date) || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm font-normal text-black-3">
-                      {item?.members || 0}
+                      {item?.players?.length || 0}/{item.playersRequired}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -546,8 +399,9 @@ const MatchTable = () => {
                         onClick={() => openInactiveModal(item)}
                         className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
                       >
-                        Inactive
+                        Cancel
                       </span>
+
                       <span
                         onClick={() => openDeleteModal(item._id)}
                         className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-red-600 rounded-lg cursor-pointer hover:text-red-700 hover:bg-red-50"
