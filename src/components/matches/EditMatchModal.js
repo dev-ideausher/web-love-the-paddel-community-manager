@@ -23,6 +23,7 @@ const EditMatchModal = ({
     startTime: "",
     time: "",
     maxPlayers: "",
+    price: "",
   });
   const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
   const toggleSkill = (skill) => {
@@ -50,6 +51,7 @@ const EditMatchModal = ({
         startTime: initialData.startTime || "",
         endTime: initialData.endTime || "",
         maxPlayers: initialData.playersRequired || "",
+        price: initialData.price || "",
       });
     }
   }, [isOpen, initialData, subCommunitiesData]);
@@ -106,11 +108,13 @@ const EditMatchModal = ({
               className={inputStyle}
             >
               <option value="">Select</option>
-              {subCommunities.map((item) => (
+              {Array.isArray(subCommunities) &&
+              subCommunities.map((item) => (
                 <option key={item._id} value={item._id}>
                   {item.name}
                 </option>
               ))}
+
             </select>
           </Field>
 
@@ -124,6 +128,8 @@ const EditMatchModal = ({
               <option>30 mins</option>
               <option>60 mins</option>
               <option>90 mins</option>
+              <option>24 hours</option>
+              <option>48 hours</option>
             </select>
           </Field>
 
@@ -210,6 +216,17 @@ const EditMatchModal = ({
               onChange={(e) => handleChange("maxPlayers", e.target.value)}
               className={inputStyle}
               placeholder="16"
+            />
+          </Field>
+
+          <Field label="Price">
+            <input
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => handleChange("price", e.target.value)}
+              className={inputStyle}
+              placeholder="0.00"
             />
           </Field>
 

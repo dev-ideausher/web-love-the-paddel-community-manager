@@ -45,24 +45,35 @@ const MatchTable = () => {
 
   const fetchSubCommunities = async () => {
     const res = await getSubCommunitiesList();
-    setSubcommunities(res.data.results);
+    setSubcommunities(res?.data || []);
+
   };
-  const fetchData = async () => {
-    await getMatchesList().then((res) => {
+  const fetchData = async (page = 1, limit = 10, search = "") => {
+    setLoading(true);
+    try {
+      const params = { page, limit };
+      if (search) params.search = search;
+      
+      const res = await getMatchesList(params);
       console.log("Triggered", res);
 
       setAllData(res.data.results);
+      setFilteredData(res.data.results);
       setPagination({
         page: res.data.page,
         limit: res.data.limit,
         totalPages: res.data.totalPages,
       });
-    });
+    } catch (error) {
+      console.error("Failed to fetch matches:", error);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
-    fetchData();
+    fetchData(pagination.page, pagination.limit);
     fetchSubCommunities();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -77,7 +88,7 @@ const MatchTable = () => {
     setIsProcessing(true);
     try {
       await createMatch(matchData).then(() => {
-        fetchData();
+        fetchData(pagination.page, pagination.limit, searchTerm);
       });
 
       setShowCreateModal(false);
@@ -95,25 +106,15 @@ const MatchTable = () => {
     return data.slice(startIndex, endIndex);
   }, []);
 
-  // Update filtered data based on search
+  // Update filtered data based on search (disable for server-side pagination)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const filtered = allData.filter(
-        (item) =>
-          item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item?.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-
-      setFilteredData(filtered);
-      setPagination((prev) => ({
-        ...prev,
-        page: 1,
-        totalPages: Math.ceil(filtered.length / prev.limit),
-      }));
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, allData]); // <-- include allData
+    if (searchTerm) {
+      const timeoutId = setTimeout(() => {
+        fetchData(1, pagination.limit, searchTerm);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchTerm]);
 
   // Update displayed data when pagination or filtered data changes
   // useEffect(() => {
@@ -216,12 +217,8 @@ const MatchTable = () => {
     }
   };
 
-  // Get current page data for S.No calculation
-  const currentPageData = getPaginatedData(
-    filteredData,
-    pagination.page,
-    pagination.limit,
-  );
+  // Get current page data (use allData directly for server-side pagination)
+  const currentPageData = allData;
 
   return (
     <div>
@@ -306,7 +303,7 @@ const MatchTable = () => {
       <div className="pt-2 m-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-600">
-            Showing {currentPageData.length} of {filteredData.length} entries
+            Showing {allData.length} of {pagination.totalPages * pagination.limit} entries
           </span>
         </div>
 
@@ -337,13 +334,13 @@ const MatchTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentPageData.length === 0 ? (
+            {allData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="py-12 text-center text-gray-500"
                 >
-                  {filteredData.length === 0
+                  {allData.length === 0
                     ? "No data matches your search"
                     : "No data available"}
                 </TableCell>

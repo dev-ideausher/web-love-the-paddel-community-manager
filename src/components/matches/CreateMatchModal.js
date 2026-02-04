@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
 const EMPTY_FORM = {
   name: "",
@@ -14,6 +15,8 @@ const EMPTY_FORM = {
   endTime: "",
   time: "",
   maxPlayers: "",
+  price: "",
+  location: "",
 };
 
 const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
@@ -26,15 +29,56 @@ const CreateMatchModal = ({
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
+  const [selectedPosition, setSelectedPosition] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(EMPTY_FORM); // reset every time modal opens
+      setFormData(EMPTY_FORM);
     }
   }, [isOpen]);
 
+  const handleMapClick = (event) => {
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    setSelectedPosition({ lat, lng });
+    
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        handleChange('location', results[0].formatted_address);
+      }
+    });
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setSelectedPosition({ lat, lng });
+        setMapCenter({ lat, lng });
+        handleMapClick({ latLng: { lat: () => lat, lng: () => lng } });
+      });
+    }
+  };
+
   const handleChange = useCallback((key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [key]: value };
+      
+      if ((key === 'startTime' || key === 'duration') && newData.startTime && newData.duration) {
+        const durationMinutes = parseInt(newData.duration.split(' ')[0]);
+        const [hours, minutes] = newData.startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+        newData.endTime = endDate.toTimeString().slice(0, 5);
+      }
+      
+      return newData;
+    });
   }, []);
 
   const toggleSkill = (skill) => {
@@ -59,7 +103,6 @@ const CreateMatchModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="sticky top-0 px-6 py-4 bg-white border-b rounded-t-lg">
           <h2 className="text-xl font-semibold text-gray-900">Create Match</h2>
         </div>
@@ -86,11 +129,13 @@ const CreateMatchModal = ({
               className={inputStyle}
             >
               <option value="">Select</option>
-              {subCommunities.map((item) => (
+              {Array.isArray(subCommunities) &&
+              subCommunities.map((item) => (
                 <option key={item._id} value={item._id}>
                   {item.name}
                 </option>
               ))}
+
             </select>
           </Field>
 
@@ -117,6 +162,13 @@ const CreateMatchModal = ({
               <option>Verified</option>
               <option>Unverified</option>
             </select>
+            {formData.matchType === "Verified" && (
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ This match requires verification. User will be redirected to complete the verification process.
+                </p>
+              </div>
+            )}
           </Field>
 
           <Field label="Match Mode">
@@ -156,7 +208,7 @@ const CreateMatchModal = ({
             </div>
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Field label="Date">
               <input
                 type="date"
@@ -166,15 +218,23 @@ const CreateMatchModal = ({
               />
             </Field>
 
-            <Field label="Time">
+            <Field label="Start Time">
               <input
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => {
                   handleChange("startTime", e.target.value);
-                  console.log(e.target.value);
                 }}
                 className={inputStyle}
+              />
+            </Field>
+
+            <Field label="End Time">
+              <input
+                type="time"
+                value={formData.endTime}
+                readOnly
+                className={`${inputStyle} bg-gray-50`}
               />
             </Field>
           </div>
@@ -187,6 +247,57 @@ const CreateMatchModal = ({
               className={inputStyle}
               placeholder="16"
             />
+          </Field>
+
+          <Field label="Price">
+            <input
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => handleChange("price", e.target.value)}
+              className={inputStyle}
+              placeholder="0.00"
+            />
+          </Field>
+
+          <Field label="Match Location">
+            <div className="relative">
+              <input
+                value={formData.location}
+                onChange={(e) => handleChange("location", e.target.value)}
+                onClick={() => setShowMap(!showMap)}
+                className={`${inputStyle} min-h-[60px] bg-gray-50 text-gray-600 cursor-pointer`}
+                placeholder="Dubai, United Arab Emirates Sheikh Zayed Road, Al Quoz 1, 12345"
+                readOnly
+              />
+              {showMap && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10">
+                  <div className="p-3 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        getCurrentLocation();
+                        setShowMap(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+                    >
+                      📍 Use my current location
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Add manually"
+                      className="w-full px-3 py-2 border rounded"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleChange('location', e.target.value);
+                          setShowMap(false);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </Field>
 
           <div className="flex gap-3 pt-4">
