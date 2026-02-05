@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 const EMPTY_FORM = {
   name: "",
@@ -32,6 +32,11 @@ const CreateMatchModal = ({
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
   const [selectedPosition, setSelectedPosition] = useState(null);
+  const { isLoaded } = useJsApiLoader({
+  googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+  libraries: ["places"],
+});
+
 
   useEffect(() => {
     if (isOpen) {
@@ -39,18 +44,21 @@ const CreateMatchModal = ({
     }
   }, [isOpen]);
 
-  const handleMapClick = (event) => {
-    const lat = event.latLng.lat();
-    const lng = event.latLng.lng();
-    setSelectedPosition({ lat, lng });
-    
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        handleChange('location', results[0].formatted_address);
-      }
-    });
-  };
+const handleMapClick = (event) => {
+  if (!isLoaded || !window.google?.maps) return;
+
+  const lat = event.latLng.lat();
+  const lng = event.latLng.lng();
+  setSelectedPosition({ lat, lng });
+
+  const geocoder = new window.google.maps.Geocoder();
+  geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+    if (status === "OK" && results?.[0]) {
+      handleChange("location", results[0].formatted_address);
+    }
+  });
+};
+
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -270,33 +278,29 @@ const CreateMatchModal = ({
                 placeholder="Dubai, United Arab Emirates Sheikh Zayed Road, Al Quoz 1, 12345"
                 readOnly
               />
-              {showMap && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10">
-                  <div className="p-3 space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        getCurrentLocation();
-                        setShowMap(false);
-                      }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-                    >
-                      📍 Use my current location
-                    </button>
-                    <input
-                      type="text"
-                      placeholder="Add manually"
-                      className="w-full px-3 py-2 border rounded"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleChange('location', e.target.value);
-                          setShowMap(false);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
+          {showMap && isLoaded && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-10 p-2">
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2"
+              >
+                📍 Use my current location
+              </button>
+
+              <div className="h-64 w-full rounded-lg overflow-hidden">
+                <GoogleMap
+                  center={mapCenter}
+                  zoom={14}
+                  mapContainerStyle={{ width: "100%", height: "100%" }}
+                  onClick={handleMapClick}
+                >
+                  {selectedPosition && <Marker position={selectedPosition} />}
+                </GoogleMap>
+              </div>
+            </div>
+          )}
+
             </div>
           </Field>
 
