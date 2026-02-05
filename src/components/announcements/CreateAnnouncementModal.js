@@ -19,6 +19,7 @@ const CreateAnnouncementModal = ({
     title: "",
     description: "",
     subCommunity: "",
+    
   });
 
   const [images, setImages] = useState([]);
