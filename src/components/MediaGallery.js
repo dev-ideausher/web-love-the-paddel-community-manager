@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Play, Pause, Trash2 } from "lucide-react";
 import { deleteMediaAPI } from "@/services/clubServices";
+import ClipLoader from "react-spinners/ClipLoader";
+
 const MediaGallery = ({ businessPhotos = [], businessVideos = [], vendorId, onDeleteMedia, fetchVendorDetail }) => {
     const [showPopup, setShowPopup] = useState(false);
     const [activeMediaTab, setActiveMediaTab] = useState("Photos");

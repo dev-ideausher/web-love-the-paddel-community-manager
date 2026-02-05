@@ -3,10 +3,11 @@ import { useState } from "react";
 import Button from "../Button";
 
 const ViewSubCommunityModal = ({ isOpen, onClose, title, data = {} }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = data?.images || [];
+
   if (!isOpen || !data) return null;
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const images = data.images || [];
   console.log("data images:", data);
 
   const goToPrevious = () => {

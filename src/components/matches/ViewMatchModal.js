@@ -4,13 +4,15 @@ import Button from "../Button";
 import { formatDate, formatTime } from "@/Utilities/helpers";
 
 const ViewMatchModal = ({ isOpen, onClose, data = {} }) => {
+  const [showPlayersModal, setShowPlayersModal] = useState(false);
+  const [playerList, setPlayerList] = useState([]);
+
+  useEffect(() => {
+    setPlayerList(data?.players || []);
+  }, [data]);
+
   if (!isOpen || !data) return null;
 
-  const [showPlayersModal, setShowPlayersModal] = useState(false);
-  const [playerList, setPlayerList] = useState(data?.players || []);
-  useEffect(() => {
-    setPlayerList(data.players);
-  }, [data]);
 
   return (
     <>
