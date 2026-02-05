@@ -14,21 +14,27 @@ export default function App({ Component, pageProps }) {
         <title>Love The Padel</title>
         <meta name="description" content="web-love-the-padel" />
       </Head>
-      <main className="relative font-helvetica-neue">
-        <Component {...pageProps} />
-        <ToastContainer
-          position="bottom-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={true}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-      </main>
+
+      {/* 🔑 WRAP EVERYTHING WITH THE PROVIDER */}
+      <NotificationProvider>
+        <NotificationListener />
+
+        <main className="relative font-helvetica-neue">
+          <Component {...pageProps} />
+
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
+        </main>
+      </NotificationProvider>
     </>
   );
 }

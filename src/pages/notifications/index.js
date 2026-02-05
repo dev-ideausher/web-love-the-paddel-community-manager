@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import Layout from "@/layout/Layout";
 import Loader from "@/components/ui/Loader";
