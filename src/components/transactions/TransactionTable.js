@@ -21,6 +21,7 @@ import DeleteModal from "../ui/DeleteModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import StatusChip from "../ui/StatusChip";
 import TransactionFilter from "./TransactionFilter";
+import { getCommunityTransactions } from "@/services/api/transactions";
 
 const dummyData = [
   {
@@ -145,227 +146,86 @@ const dummyData = [
   },
 ];
 
-const TransactionTable = () => {
+const TransactionTable = ({ onSummaryUpdate }) => {
   const [filter, setFilter] = useState("all");
   const [isClient, setIsClient] = useState(false);
-  const [allData, setAllData] = useState(dummyData);
-  const [filteredData, setFilteredData] = useState(dummyData);
+  const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
     totalPages: 1,
+    totalResults: 0,
   });
 
-  // Modal states
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showInactiveModal, setShowInactiveModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedDelete, setSelectedDelete] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const handleCreateCommunity = async (newCommunityData) => {
-    setIsProcessing(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Add new community to filtered data (at top)
-      const newCommunity = {
-        _id: Date.now().toString(),
-        ...newCommunityData,
-        dateCreated: new Date().toISOString().split("T")[0],
-        members: 0,
-        status: "active",
-        images: newCommunityData.images.map((img, idx) => ({
-          id: idx,
-          url: URL.createObjectURL(img),
-        })),
-      };
-
-      setFilteredData([newCommunity, ...filteredData]);
-      setShowCreateModal(false);
-      setFormData({ title: "", description: "" });
-      setImages([]);
-      setImagePreviews([]);
-    } catch (error) {
-      console.error("Failed to create community:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const router = useRouter();
-  let searchTimeout;
 
-  // Filter and paginate data
-  const getPaginatedData = useCallback((data, page, limit) => {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    return data.slice(startIndex, endIndex);
-  }, []);
+  // Fetch transactions from API
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        page: pagination.page,
+        limit: pagination.limit,
+      };
+      
+      if (searchTerm) {
+        payload.search = searchTerm;
+      }
+      
+      if (filter && filter !== "all") {
+        payload.status = filter;
+      }
 
-  // Update filtered data based on search
+      const response = await getCommunityTransactions(payload);
+      
+      if (response.status && response.data) {
+        setAllData(response.data.results || []);
+        setPagination(prev => ({
+          ...prev,
+          totalPages: response.data.totalPages || 1,
+          totalResults: response.data.totalResults || 0,
+        }));
+        
+        if (onSummaryUpdate && response.data.summary) {
+          onSummaryUpdate(response.data.summary);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.limit, searchTerm, filter, onSummaryUpdate]);
+
+  // Fetch data on mount and when dependencies change
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Debounce search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      const filtered = dummyData.filter(
-        (item) =>
-          item.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.match.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-      setFilteredData(filtered);
-      setPagination((prev) => ({
-        ...prev,
-        page: 1,
-        totalPages: Math.ceil(filtered.length / prev.limit),
-      }));
+      if (pagination.page !== 1) {
+        setPagination(prev => ({ ...prev, page: 1 }));
+      } else {
+        fetchTransactions();
+      }
     }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  // Update displayed data when pagination or filtered data changes
-  useEffect(() => {
-    const paginatedData = getPaginatedData(
-      filteredData,
-      pagination.page,
-      pagination.limit
-    );
-    setAllData(paginatedData);
-  }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
-
-  // Modal handlers
-  const openDeleteModal = (id) => {
-    setSelectedDelete(id);
-    setShowDeleteModal(true);
-  };
-
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
-    setSelectedDelete(null);
-  };
-
-  const openViewModal = (item) => {
-    setSelectedItem(item);
-    setShowViewModal(true);
-  };
-
-  const openEditModal = (item) => {
-    setSelectedItem(item);
-    setShowEditModal(true);
-  };
-
-  const openInactiveModal = (item) => {
-    setSelectedItem(item);
-    setShowInactiveModal(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedDelete) return;
-    setIsProcessing(true);
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Filter from original data and re-paginate
-      const newFiltered = filteredData.filter(
-        (item) => item._id !== selectedDelete
-      );
-      setFilteredData(newFiltered);
-
-      // Update pagination if needed
-      const newTotalPages = Math.ceil(newFiltered.length / pagination.limit);
-      if (pagination.page > newTotalPages && newTotalPages > 0) {
-        setPagination((prev) => ({ ...prev, page: newTotalPages }));
-      }
-
-      closeDeleteModal();
-    } catch (error) {
-      console.error("Failed to delete sub-community:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleInactiveConfirm = async () => {
-    setIsProcessing(true);
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, status: "inactive" } : item
-        )
-      );
-      setShowInactiveModal(false);
-    } catch (error) {
-      console.error("Failed to inactive sub-community:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleEditSave = async (updatedData) => {
-    setIsProcessing(true);
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, ...updatedData } : item
-        )
-      );
-      setShowEditModal(false);
-    } catch (error) {
-      console.error("Failed to update sub-community:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Get current page data for S.No calculation
-  const currentPageData = getPaginatedData(
-    filteredData,
-    pagination.page,
-    pagination.limit
-  );
-
   return (
     <div>
       <Loader loading={loading} />
 
-      {/* Delete Modal */}
-      <DeleteModal
-        isOpen={showDeleteModal}
-        onClose={closeDeleteModal}
-        onConfirm={handleDeleteConfirm}
-        isProcessing={isProcessing}
-        title="Delete this Sub Community?"
-        message="Are you sure you want to delete this community? This action cannot be undone."
-      />
-
-      {/* Inactive Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showInactiveModal}
-        onClose={() => setShowInactiveModal(false)}
-        onConfirm={handleInactiveConfirm}
-        title="Inactive Sub Community?"
-        message={`Are you sure you want to make "${selectedItem?.title}" inactive?`}
-        confirmText="Yes, make inactive"
-        cancelText="Cancel"
-        isProcessing={isProcessing}
-      />
-
       <div className="flex items-center justify-between m-4 mb-6">
         <InputWithLabel
-          placeholder="Search by title or description"
+          placeholder="Search transactions"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md rounded-3xl text-zinc-500"
@@ -378,7 +238,7 @@ const TransactionTable = () => {
 
           <Button
             className="flex gap-1 py-3 whitespace-nowrap"
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => downloadCSV(allData, "transactions")}
           >
             <Download />
             Download CSV
@@ -389,7 +249,7 @@ const TransactionTable = () => {
       <div className="pt-2 m-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-600">
-            Showing {currentPageData.length} of {filteredData.length} entries
+            Showing {allData.length} of {pagination.totalResults} entries
           </span>
         </div>
 
@@ -403,7 +263,7 @@ const TransactionTable = () => {
                 Transaction ID
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                User
+                Community
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
                 Match
@@ -415,24 +275,22 @@ const TransactionTable = () => {
                 Date
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                status
+                Status
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentPageData.length === 0 ? (
+            {allData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-12 text-center text-gray-500"
                 >
-                  {filteredData.length === 0
-                    ? "No data matches your search"
-                    : "No data available"}
+                  {loading ? "Loading..." : "No transactions found"}
                 </TableCell>
               </TableRow>
             ) : (
-              currentPageData.map((item, index) => (
+              allData.map((item, index) => (
                 <TableRow key={item._id} className="bg-white hover:bg-gray-50">
                   <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
@@ -441,33 +299,31 @@ const TransactionTable = () => {
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="text-sm font-normal font-medium truncate text-black-3">
-                      {item.transactionId || "N/A"}
+                      {item._id || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-normal text-black-3 truncate max-w-[150px]">
-                        {item.user?.name || "Unknown User"}
-                      </span>
-                    </div>
+                    <span className="text-sm font-normal text-black-3 truncate max-w-[150px]">
+                      {item.communityMatch?.community?.name || "N/A"}
+                    </span>
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item.match || "N/A"}
+                      {item.communityMatch?.name || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="text-sm font-normal font-medium text-black-3">
-                      ${item.amount?.toFixed(2) || "0.00"}
+                      {item.amount} {item.currency}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
-                      {item.date || "N/A"}
+                      {formatDate(item.transactionDate)}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">
-                    <StatusChip status={item.status || "pending"} />
+                    <StatusChip status={item.paymentStatus || "pending"} />
                   </TableCell>
                 </TableRow>
               ))

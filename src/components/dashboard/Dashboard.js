@@ -7,50 +7,30 @@ import TableNoHeader from "../ui/TableNoHeader";
 import Image from "next/image";
 import RecentActivity from "../ui/RecentActivity";
 import QuickAccess from "../ui/QuickAccess";
-
-// RecentActivity Component
-const accessStats = {
-  communities: 12,
-  matches: 5,
-  updates: 3,
-  payments: 44,
-};
-const sampleMatches = [
-  {
-    id: "1",
-    name: "Weeknend Paddlers tournament",
-    location: "Downtown Paddlers club",
-    dateTime: "12th June 2024, 5:00 PM",
-    playersCurrent: 8,
-    playersMax: 16,
-    type: "Friendly",
-  },
-];
-
-const sampleActivity = [
-  {
-    id: "1",
-    description: 'New community "Downtown Paddlers" created.',
-    timestamp: "2025-01-01T12:00:00Z",
-    type: "money",
-  },
-  {
-    id: "2",
-    description: "Match scheduled.",
-    timestamp: "2025-01-14T08:44:00Z",
-    type: "calendar",
-  },
-  {
-    id: "3",
-    description: "User joined community.",
-    timestamp: "2025-01-14T10:30:00Z",
-    type: "community",
-  },
-];
+import { getCommunityDashboard } from "@/services/api/transactions";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setLoading(true);
+      try {
+        const response = await getCommunityDashboard();
+        if (response.status && response.data) {
+          setDashboardData(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
 
   return (
     <>
@@ -61,19 +41,19 @@ const Dashboard = () => {
           Manage your communities, matches, and announcements
         </p>
       </div>
-      <PromoCard />
+      <PromoCard summary={dashboardData?.summary} />
       <div className="flex flex-row gap-6">
         <div className="w-5/6">
           <TableNoHeader
-            data={sampleMatches}
+            data={dashboardData?.upcomingMatches}
             onViewAll={() => router.push("/matches")}
           />
         </div>
 
-        <RecentActivity activities={sampleActivity} />
+        <RecentActivity activities={dashboardData?.recentActivity} />
       </div>
 
-      <QuickAccess stats={accessStats} />
+      <QuickAccess stats={dashboardData?.quickAccess} />
     </>
   );
 };

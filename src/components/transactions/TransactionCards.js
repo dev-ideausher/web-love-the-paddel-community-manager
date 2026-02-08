@@ -1,33 +1,30 @@
 import React from "react";
 
-const TransactionCards = ({ stats }) => {
+const TransactionCards = ({ summary }) => {
   const cardList = [
     {
       title: "Total Revenue",
-      subTitle: " Sub communities",
-      count: "$70",
+      subTitle: " AED",
+      count: summary?.totalRevenue || 0,
       icon: "/icons/totalRevenue.svg",
     },
     {
       title: "Failed",
-      count: "15",
-      subTitle: " Matches",
+      count: summary?.failedRevenue || 0,
+      subTitle: " AED",
       icon: "/icons/failed.svg",
     },
     {
       title: "Pending",
       icon: "/icons/pending.svg",
-      count: " 23",
-
-      subTitle: " Sub communities",
+      count: summary?.pendingRevenue || 0,
+      subTitle: " AED",
     },
     {
       title: "Completed",
-      count: stats?.payments,
+      count: summary?.completedRevenue || 0,
       icon: "/icons/completed.svg",
-      count: " 23",
-
-      subTitle: " Sub communities",
+      subTitle: " AED",
     },
   ];
   return (
