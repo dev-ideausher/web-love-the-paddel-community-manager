@@ -2,22 +2,22 @@ import React, { useEffect, useState } from "react";
 import Button from "../Button";
 import { useRouter } from "next/router";
 
-const PromoCard = ({ data }) => {
+const PromoCard = ({ summary }) => {
   const router = useRouter();
   const metricsData = [
     {
       title: "Total Sub-Communities",
-      value: "500",
+      value: summary?.totalSubCommunities || 0,
       image: "/icons/community.svg",
     },
     {
       title: "Active Matches",
-      value: "500",
+      value: summary?.activeMatches || 0,
       image: "/icons/activematches.svg",
     },
     {
       title: "Total Transactions",
-      value: "500",
+      value: summary?.totalTransactions || 0,
       image: "/icons/totaltransactions.svg",
     },
   ];

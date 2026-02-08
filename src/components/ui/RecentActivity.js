@@ -5,6 +5,7 @@ const RecentActivity = ({ activities }) => {
     const icons = {
       calendar: "/icons/notification1.svg",
       money: "/icons/notification2.svg",
+      member_joined: "/icons/notification3.svg",
       community: "/icons/notification3.svg",
       announcement: "/icons/notification4.svg",
     };
@@ -37,8 +38,8 @@ const RecentActivity = ({ activities }) => {
         Recent Activity
       </h2>
       <ul>
-        {activities.map((activity) => (
-          <li key={activity.id}>
+        {activities?.map((activity) => (
+          <li key={activity._id}>
             <div className="flex items-start gap-2 m-4 row">
               <Image
                 src={getActivityIcon(activity.type)}
@@ -48,9 +49,9 @@ const RecentActivity = ({ activities }) => {
               />
               <div className="flex flex-col">
                 <span className="font-medium text-[#5D5D5D]">
-                  {activity.description}
+                  {activity.message}
                 </span>
-                <TimeAgo timestamp={activity.timestamp} />
+                <TimeAgo timestamp={activity.createdAt} />
               </div>
             </div>
           </li>

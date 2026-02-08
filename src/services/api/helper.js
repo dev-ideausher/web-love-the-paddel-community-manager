@@ -1,7 +1,7 @@
 import { getToken, getUser, setToken } from "../firebase-services/cookies";
 import { toast } from 'react-toastify';
 import { auth } from "../firebase-services/firebase";
-export const URL = process.env.NEXT_PUBLIC_BASE_URL;
+export const URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
 
 export const waitForAuthReady = async (auth) => {
     if (typeof auth.authStateReady === 'function') {

@@ -5,28 +5,26 @@ const QuickAccess = ({ stats }) => {
     {
       title: "Manage Communities",
       subTitle: " Sub communities",
-      count: stats.communities,
+      count: stats?.subCommunities || 0,
       icon: "/icons/manageCommunities.svg",
     },
     {
       title: "View Matches",
-      count: stats.matches,
+      count: stats?.matches || 0,
       subTitle: " Matches",
       icon: "/icons/viewMatches.svg",
     },
     {
       title: "Publish Updates",
       icon: "/icons/publishUpdates.svg",
-      count: stats.updates,
-
-      subTitle: " Sub communities",
+      count: stats?.announcements || 0,
+      subTitle: " Announcements",
     },
     {
       title: "View Payment History",
-      count: stats.payments,
+      count: stats?.transactions || 0,
       icon: "/icons/paymentHistory.svg",
-
-      subTitle: " Sub communities",
+      subTitle: " Transactions",
     },
   ];
   return (
