@@ -19,7 +19,7 @@ const EMPTY_FORM = {
   location: "",
 };
 
-const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
+const SKILLS = ["A", "B+", "B", "B-", "C-", "C+", "D", "D+"];
 
 const CreateMatchModal = ({
   subCommunities,
@@ -32,33 +32,79 @@ const CreateMatchModal = ({
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
   const [selectedPosition, setSelectedPosition] = useState(null);
+  const [locationDetails, setLocationDetails] = useState({
+    formattedAddress: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: ""
+  });
+  
   const { isLoaded } = useJsApiLoader({
-  googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-  libraries: ["places"],
-});
-
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
+  });
 
   useEffect(() => {
     if (isOpen) {
       setFormData(EMPTY_FORM);
+      // Reset location details when modal opens
+      setLocationDetails({
+        formattedAddress: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: ""
+      });
     }
   }, [isOpen]);
 
-const handleMapClick = (event) => {
-  if (!isLoaded || !window.google?.maps) return;
+  const handleMapClick = (event) => {
+    if (!isLoaded || !window.google?.maps) return;
 
-  const lat = event.latLng.lat();
-  const lng = event.latLng.lng();
-  setSelectedPosition({ lat, lng });
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    setSelectedPosition({ lat, lng });
 
-  const geocoder = new window.google.maps.Geocoder();
-  geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-    if (status === "OK" && results?.[0]) {
-      handleChange("location", results[0].formatted_address);
-    }
-  });
-};
-
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.[0]) {
+        const address = results[0].formatted_address;
+        
+        // Parse address components for city, state, etc.
+        let city = "";
+        let state = "";
+        let postalCode = "";
+        let country = "";
+        
+        results[0].address_components.forEach(component => {
+          if (component.types.includes("locality")) {
+            city = component.long_name;
+          }
+          if (component.types.includes("administrative_area_level_1")) {
+            state = component.long_name;
+          }
+          if (component.types.includes("postal_code")) {
+            postalCode = component.long_name;
+          }
+          if (component.types.includes("country")) {
+            country = component.long_name;
+          }
+        });
+        
+        // Store location details in state for later use in the payload
+        setLocationDetails({
+          formattedAddress: address,
+          city,
+          state,
+          postalCode,
+          country
+        });
+        
+        handleChange("location", address);
+      }
+    });
+  };
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -98,11 +144,63 @@ const handleMapClick = (event) => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
+  const durationMap = {
+    "30 mins": "30mins",
+    "60 mins": "60mins",
+    "90 mins": "90mins",
+    "24 hours": "24hours",
+    "48 hours": "48hours",
+  };
+  
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  const dateStr = formData.date.split("T")[0];
+  const lng = selectedPosition?.lng || 0;
+  const lat = selectedPosition?.lat || 0;
+
+  // Map subcommunity values to their community IDs
+  const subCommunityToCommunityMap = {
+    "master": "69523e5ce4e6606aa7ac3d5a",
+    "downtown": "69523e5ce4e6606aa7ac3d5b",
+    "eastside": "69523e5ce4e6606aa7ac3d5bc",
+    "westvalley": "69523e5ce4e6606aa7ac3d5d"
   };
 
+  const communityId = subCommunityToCommunityMap[formData.subCommunity] || "69523e5ce4e6606aa7ac3d5b";
+
+  const apiPayload = {
+    name: formData.name,
+    description: formData.name,
+    community: communityId,
+    location: {
+      streetAddress: locationDetails.formattedAddress || formData.location || "Default Location",
+      country: locationDetails.country || "Delhi",
+      city: locationDetails.city || "Akshardham",
+      state: locationDetails.state || "Delhi",
+      postalCode: locationDetails.postalCode || "201301",
+      position: {
+        type: "Point",
+        coordinates: [lng, lat],
+      },
+    },
+    date: new Date(dateStr).toISOString(),
+    startTime: new Date(`${dateStr}T${formData.startTime}:00`).toISOString(),
+    endTime: new Date(`${dateStr}T${formData.endTime}:00`).toISOString(),
+    matchMode: formData.matchMode,
+    duration: durationMap[formData.duration],
+    playersRequired: Number(formData.maxPlayers),
+    price: Number(formData.price),
+    cancellationPolicy: [
+      "Cancellation allowed up to 24 hours before match",
+      "No refund for same-day cancellation",
+    ],
+  };
+
+  console.log('Sending API-compatible payload:', apiPayload);
+  onSave(apiPayload);
+};
+    
   if (!isOpen) return null;
 
   const inputStyle =
@@ -127,23 +225,15 @@ const handleMapClick = (event) => {
 
           <Field label="Sub Community">
             <select
-              value={formData.subCommunity?._id || ""}
-              onChange={(e) => {
-                const selected = subCommunities.find(
-                  (item) => item._id === e.target.value,
-                );
-                handleChange("subCommunity", selected || {});
-              }}
+              value={formData.subCommunity || ""}
+              onChange={(e) => handleChange("subCommunity", e.target.value)}
               className={inputStyle}
             >
               <option value="">Select</option>
-              {Array.isArray(subCommunities) &&
-              subCommunities.map((item) => (
-                <option key={item._id} value={item._id}>
-                  {item.name}
-                </option>
-              ))}
-
+              <option value="master">Master community</option>
+              <option value="downtown">Downtown padel club</option>
+              <option value="eastside">East side courts</option>
+              <option value="westvalley">West valley arena</option>
             </select>
           </Field>
 
@@ -157,6 +247,8 @@ const handleMapClick = (event) => {
               <option>30 mins</option>
               <option>60 mins</option>
               <option>90 mins</option>
+              <option>24 hours</option>
+              <option>48 hours</option>
             </select>
           </Field>
 
@@ -185,10 +277,11 @@ const handleMapClick = (event) => {
               onChange={(e) => handleChange("matchMode", e.target.value)}
               className={inputStyle}
             >
-              <option value="">Select</option>
-              <option value={"social"}>Social</option>
-              <option value={"competitive"}>Competitive</option>
-              <option value={"league"}>League</option>
+              <option value="friendly">Friendly</option>
+              <option value="matchplay">Match Play</option>
+              <option value="social">Social</option>
+              <option value="league">League</option>
+
             </select>
           </Field>
 

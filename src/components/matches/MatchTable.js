@@ -29,6 +29,7 @@ import {
 } from "@/services/matchServices";
 import { formatDate } from "@/Utilities/helpers";
 import { getSubCommunitiesList } from "@/services/subCommunityServices";
+import { GoogleMapsProvider } from "@/contexts/GoogleMapsContext";
 
 const MatchTable = () => {
   const [isClient, setIsClient] = useState(false);
@@ -221,6 +222,7 @@ const MatchTable = () => {
   const currentPageData = allData;
 
   return (
+    <GoogleMapsProvider>
     <div>
       <Loader loading={loading} />
       <CreateMatchModal
@@ -416,6 +418,7 @@ const MatchTable = () => {
         <Pagination pagination={pagination} setPagination={setPagination} />
       </div>
     </div>
+    </GoogleMapsProvider>
   );
 };
 

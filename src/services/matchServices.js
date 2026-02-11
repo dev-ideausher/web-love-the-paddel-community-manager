@@ -93,9 +93,9 @@ export const deleteMatches = async (id) => {
 };
 
 export const createMatch = async (payload) => {
-  const endpoint = `${URL}/communities/matches`;
+  const endpoint = `${URL}/communities/matches/`;
   const token = await getAuthToken();
-  console.log(payload);
+  console.log('Payload being sent:', payload);
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
   myHeaders.append("Content-Type", "application/json");
@@ -110,6 +110,7 @@ export const createMatch = async (payload) => {
     const response = await fetch(endpoint, requestOptions);
     return responseValidator(response, true);
   } catch (error) {
+    console.error('Create match error:', error);
     return apiError(error);
   }
 };

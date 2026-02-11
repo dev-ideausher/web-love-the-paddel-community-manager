@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 import { Cross, CrossIcon } from "lucide-react";
+import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
+import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 
 const EditMatchModal = ({
   isOpen,
@@ -12,6 +14,10 @@ const EditMatchModal = ({
   isLoading = false,
 }) => {
   const [subCommunities, setSubcommunities] = useState([]);
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
   const [formData, setFormData] = useState({
     matchName: "",
     subCommunity: {},
@@ -24,7 +30,66 @@ const EditMatchModal = ({
     time: "",
     maxPlayers: "",
     price: "",
+    location: {
+      address: "",
+      lat: null,
+      lng: null,
+    },
   });
+  const { isLoaded } = useGoogleMaps();
+
+  const handleMapClick = (event) => {
+    if (!window.google) return;
+
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+
+    setSelectedPosition({ lat, lng });
+    setMapCenter({ lat, lng });
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.[0]) {
+        handleChange("location", {
+          address: results[0].formatted_address,
+          lat,
+          lng,
+        });
+      }
+    });
+  };
+
+  const onPlaceChanged = () => {
+    if (!autocomplete) return;
+
+    const place = autocomplete.getPlace();
+    if (!place.geometry) return;
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+
+    handleChange("location", {
+      address: place.formatted_address,
+      lat,
+      lng,
+    });
+
+    setSelectedPosition({ lat, lng });
+    setMapCenter({ lat, lng });
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setSelectedPosition({ lat, lng });
+        setMapCenter({ lat, lng });
+        handleMapClick({ latLng: { lat: () => lat, lng: () => lng } });
+      });
+    }
+  };
+
   const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
   const toggleSkill = (skill) => {
     setFormData((prev) => ({
@@ -39,6 +104,15 @@ const EditMatchModal = ({
     console.log(initialData);
     setSubcommunities(subCommunitiesData);
     if (isOpen && initialData) {
+      const locationData = initialData.location || {};
+      const lat = locationData.position?.coordinates?.[1] || null;
+      const lng = locationData.position?.coordinates?.[0] || null;
+      
+      if (lat && lng) {
+        setSelectedPosition({ lat, lng });
+        setMapCenter({ lat, lng });
+      }
+
       setFormData({
         matchName: initialData.name || "",
         subCommunity: initialData.community || {},
@@ -52,6 +126,11 @@ const EditMatchModal = ({
         endTime: initialData.endTime || "",
         maxPlayers: initialData.playersRequired || "",
         price: initialData.price || "",
+        location: {
+          address: locationData.streetAddress || "",
+          lat,
+          lng,
+        },
       });
     }
   }, [isOpen, initialData, subCommunitiesData]);
@@ -62,7 +141,28 @@ const EditMatchModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Transform form data to API format
+    const apiPayload = {
+      name: formData.matchName,
+      description: formData.matchName,
+      community: formData.subCommunity?._id,
+      location: {
+        streetAddress: formData.location.address,
+        position: {
+          type: "Point",
+          coordinates: [formData.location.lng, formData.location.lat]
+        }
+      },
+      date: formData.date,
+      startTime: `${formData.date.split('T')[0]}T${formData.time}:00.000Z`,
+      playersRequired: parseInt(formData.maxPlayers),
+      price: parseFloat(formData.price),
+      skills: formData.skillRange,
+      matchMode: formData.matchMode,
+    };
+    
+    onSave(apiPayload);
   };
 
   if (!isOpen) return null;
@@ -98,23 +198,26 @@ const EditMatchModal = ({
 
           <Field label="Sub Community">
             <select
-              value={formData.subCommunity?._id || ""}
+              value={formData.subCommunity?._id || formData.subCommunity?.name || ""}
               onChange={(e) => {
-                const selected = subCommunities.find(
-                  (item) => item._id === e.target.value,
+                const value = e.target.value;
+                const apiSubCommunities = subCommunities?.results || subCommunities || [];
+                const selected = apiSubCommunities.find(
+                  (item) => item._id === value,
                 );
-                handleChange("subCommunity", selected || {});
+                if (selected) {
+                  handleChange("subCommunity", selected);
+                } else {
+                  handleChange("subCommunity", { _id: value, name: value });
+                }
               }}
               className={inputStyle}
             >
               <option value="">Select</option>
-              {Array.isArray(subCommunities) &&
-              subCommunities.map((item) => (
-                <option key={item._id} value={item._id}>
-                  {item.name}
-                </option>
-              ))}
-
+              <option value="master">Master community</option>
+              <option value="downtown">Downtown padel club</option>
+              <option value="eastside">East side courts</option>
+              <option value="westvalley">West valley arena</option>
             </select>
           </Field>
 
@@ -155,6 +258,8 @@ const EditMatchModal = ({
               <option value={"social"}>Social</option>
               <option value={"competitive"}>Competitive</option>
               <option value={"league"}>League</option>
+              <option value={"league"}>League</option>
+              <option value={"matchplay"}>Matchplay</option>
             </select>
           </Field>
 
@@ -228,6 +333,60 @@ const EditMatchModal = ({
               className={inputStyle}
               placeholder="0.00"
             />
+          </Field>
+
+          <Field label="Match Location">
+            <div className="relative">
+              {isLoaded && (
+                <Autocomplete
+                  onLoad={(auto) => setAutocomplete(auto)}
+                  onPlaceChanged={onPlaceChanged}
+                >
+                  <input
+                    value={formData.location.address}
+                    onChange={(e) =>
+                      handleChange("location", {
+                        ...formData.location,
+                        address: e.target.value,
+                      })
+                    }
+                    className={inputStyle}
+                    placeholder="Search or pin location"
+                  />
+                </Autocomplete>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowMap((prev) => !prev)}
+                className="mt-2 text-sm text-blue-600 hover:underline"
+              >
+                📍 Pick from map
+              </button>
+
+              {showMap && isLoaded && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-10 p-2">
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2"
+                  >
+                    📍 Use my current location
+                  </button>
+
+                  <div className="h-64 w-full rounded-lg overflow-hidden">
+                    <GoogleMap
+                      center={mapCenter}
+                      zoom={14}
+                      mapContainerStyle={{ width: "100%", height: "100%" }}
+                      onClick={handleMapClick}
+                    >
+                      {selectedPosition && <Marker position={selectedPosition} />}
+                    </GoogleMap>
+                  </div>
+                </div>
+              )}
+            </div>
           </Field>
 
           <div className="flex gap-3 pt-4">
