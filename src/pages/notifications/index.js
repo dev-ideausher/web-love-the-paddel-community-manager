@@ -18,6 +18,7 @@ import {
   readUnreadNotification,
   unreadNotification,
 } from "@/services/notificationServices";
+import { getCommunityManagerNotifications } from "@/services/api/notifications";
 export default function Index() {
   const [notifications, setNotifications] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -38,7 +39,8 @@ export default function Index() {
       limit: pagination.limit,
     };
     try {
-      const res = await getPushNotificationsList(payload);
+      const res = await getCommunityManagerNotifications(payload);
+      console.log('Community Manager Notifications:', res);
       if (res?.status) {
         const allNotifications = res.data.results;
         setNotifications(allNotifications);
