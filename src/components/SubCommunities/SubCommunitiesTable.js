@@ -19,6 +19,7 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import CreateSubCommunityModal from "./CreateSubCommunityModal";
 import ViewSubCommunityModal from "./ViewSubCommunityModal";
 import EditSubCommunityModal from "./EditSubCommunityModal";
+import { createSubCommunity } from "@/services/subCommunityServices";
 
 const dummyData = [
   {
@@ -178,6 +179,7 @@ const SubCommunitiesTable = () => {
     limit: 10,
     totalPages: 1,
   });
+  const [parentCommunityId, setParentCommunityId] = useState("69523e5ce4e6606aa7ac3d5b");
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -191,27 +193,42 @@ const SubCommunitiesTable = () => {
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!parentCommunityId) {
+        console.error('Parent community ID is required');
+        alert('Parent community ID is not set. Please configure it first.');
+        setIsProcessing(false);
+        return;
+      }
 
-      // Add new community to filtered data (at top)
-      const newCommunity = {
-        _id: Date.now().toString(),
-        ...newCommunityData,
-        dateCreated: new Date().toISOString().split("T")[0],
-        members: 0,
-        status: "active",
-        images: newCommunityData.images.map((img, idx) => ({
-          id: idx,
-          url: URL.createObjectURL(img),
-        })),
+      const payload = {
+        name: newCommunityData.title,
+        description: newCommunityData.description,
+        parentCommunity: newCommunityData.parentCommunity,
+        isSubCommunity: true,
+        tagline: newCommunityData.title,
       };
 
-      setFilteredData([newCommunity, ...filteredData]);
-      setShowCreateModal(false);
-      setFormData({ title: "", description: "" });
-      setImages([]);
-      setImagePreviews([]);
+      console.log('Creating sub-community with payload:', payload);
+      const response = await createSubCommunity(payload);
+      console.log('API Response:', response);
+      
+      if (response.status) {
+        const newCommunity = {
+          _id: response.data._id,
+          title: response.data.name,
+          description: response.data.description,
+          dateCreated: new Date(response.data.createdAt).toISOString().split("T")[0],
+          members: response.data.members?.length || 0,
+          status: "active",
+          images: newCommunityData.images.map((img, idx) => ({
+            id: idx,
+            url: URL.createObjectURL(img),
+          })),
+        };
+
+        setFilteredData([newCommunity, ...filteredData]);
+        setShowCreateModal(false);
+      }
     } catch (error) {
       console.error("Failed to create community:", error);
     } finally {
@@ -365,6 +382,7 @@ const SubCommunitiesTable = () => {
         onClose={() => setShowCreateModal(false)}
         onSave={handleCreateCommunity}
         isLoading={isProcessing}
+        parentCommunityId={parentCommunityId}
       />
       {/* Delete Modal */}
       <DeleteModal

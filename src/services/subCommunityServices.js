@@ -114,6 +114,40 @@ export const createSubCommunities = async (payload) => {
   }
 };
 
+export const createSubCommunity = async (payload) => {
+  const endpoint = `${URL}/communities/`;
+  const token = await getAuthToken();
+
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${token}`);
+  myHeaders.append("Content-Type", "application/json");
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: JSON.stringify(payload),
+    redirect: "follow",
+  };
+
+  try {
+    const response = await fetch(endpoint, requestOptions);
+    const text = await response.text();
+    console.log('Raw response:', text);
+    
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      result = { status: false, message: text };
+    }
+    
+    console.log('createSubCommunity result:', result);
+    return result;
+  } catch (error) {
+    console.error('createSubCommunity error:', error);
+    return apiError(error);
+  }
+};
+
 export const editNotification = async (id, payload) => {
   const endpoint = `${URL}/subCommunities/${id}`;
   const token = await getAuthToken();

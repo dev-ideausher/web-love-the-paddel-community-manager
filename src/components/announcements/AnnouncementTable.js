@@ -241,9 +241,6 @@ const AnnounementTable = () => {
 
       setFilteredData([newCommunity, ...filteredData]);
       setShowCreateModal(false);
-      setFormData({ title: "", description: "" });
-      setImages([]);
-      setImagePreviews([]);
     } catch (error) {
       console.error("Failed to create community:", error);
     } finally {

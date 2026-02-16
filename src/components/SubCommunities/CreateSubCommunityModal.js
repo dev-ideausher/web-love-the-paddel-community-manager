@@ -8,6 +8,7 @@ const CreateSubCommunityModal = ({
   onClose,
   onSave,
   isLoading = false,
+  parentCommunityId,
 }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -93,9 +94,10 @@ const CreateSubCommunityModal = ({
       onSave({
         ...formData,
         images,
+        parentCommunity: parentCommunityId,
       });
     },
-    [formData, images, onSave, validateForm]
+    [formData, images, onSave, validateForm, parentCommunityId]
   );
 
   // Cleanup image previews on unmount
@@ -127,133 +129,135 @@ const CreateSubCommunityModal = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto">
-          <div className="space-y-6">
-            {/* Community Name */}
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Community Name *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.title ? "border-red-300" : "border-gray-200"
-                }`}
-                placeholder="Enter community name"
-                disabled={isLoading}
-              />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Description *
-              </label>
-              <textarea
-                rows={4}
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                className={`w-full px-4 py-3 border rounded-xl resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.description ? "border-red-300" : "border-gray-200"
-                }`}
-                placeholder="Describe your community..."
-                disabled={isLoading}
-              />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.description}
-                </p>
-              )}
-            </div>
-
-            {/* Images Upload */}
-            <div>
-              <label className="block mb-3 text-sm font-semibold text-gray-700">
-                Community Images (Max 20)
-              </label>
-              <div className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  disabled={images.length >= 20 || isLoading}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`cursor-pointer inline-flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all ${
-                    images.length >= 20 || isLoading
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                  }`}
-                >
-                  <Upload className="w-5 h-5" />
-                  {images.length >= 20
-                    ? "Maximum images reached"
-                    : `Add images (${images.length}/20)`}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 p-8 overflow-y-auto">
+            <div className="space-y-6">
+              {/* Community Name */}
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">
+                  Community Name *
                 </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.title ? "border-red-300" : "border-gray-200"
+                  }`}
+                  placeholder="Enter community name"
+                  disabled={isLoading}
+                />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                )}
               </div>
 
-              {/* Image Previews */}
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 mt-6 sm:grid-cols-3 md:grid-cols-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="object-cover w-full h-24 rounded-xl"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                        disabled={isLoading}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
+              {/* Description */}
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">
+                  Description *
+                </label>
+                <textarea
+                  rows={4}
+                  value={formData.description}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  className={`w-full px-4 py-3 border rounded-xl resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.description ? "border-red-300" : "border-gray-200"
+                  }`}
+                  placeholder="Describe your community..."
+                  disabled={isLoading}
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Images Upload */}
+              <div>
+                <label className="block mb-3 text-sm font-semibold text-gray-700">
+                  Community Images (Max 20)
+                </label>
+                <div className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
+                  <input
+                    id="image-upload"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={images.length >= 20 || isLoading}
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`cursor-pointer inline-flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all ${
+                      images.length >= 20 || isLoading
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                    }`}
+                  >
+                    <Upload className="w-5 h-5" />
+                    {images.length >= 20
+                      ? "Maximum images reached"
+                      : `Add images (${images.length}/20)`}
+                  </label>
                 </div>
-              )}
+
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 mt-6 sm:grid-cols-3 md:grid-cols-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="object-cover w-full h-24 rounded-xl"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 px-8 py-6 bg-white border-t border-gray-200 rounded-3xl">
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-white border-buttontext text-buttontext  hover:bg-gray-50"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ClipLoader color="white" size={20} />
+                ) : (
+                  <Image className="w-4 h-4" />
+                )}
+                {isLoading ? "Creating..." : "Create Community"}
+              </Button>
             </div>
           </div>
         </form>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 px-8 py-6 bg-white border-t border-gray-200 rounded-3xl">
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-white border-buttontext text-buttontext  hover:bg-gray-50"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ClipLoader color="white" size={20} />
-              ) : (
-                <Image className="w-4 h-4" />
-              )}
-              {isLoading ? "Creating..." : "Create Community"}
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );

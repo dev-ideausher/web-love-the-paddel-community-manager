@@ -114,6 +114,16 @@ const CreateAnnouncementModal = ({
     };
   }, []);
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ title: "", description: "", subCommunity: "" });
+      setImages([]);
+      setImagePreviews([]);
+      setErrors({});
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -136,7 +146,7 @@ const CreateAnnouncementModal = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto" id="create-announcement-form">
           <div className="space-y-6">
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">
@@ -267,33 +277,32 @@ const CreateAnnouncementModal = ({
               )}
             </div>
           </div>
-        </form>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 px-8 py-6 bg-white border-t border-gray-200 rounded-3xl">
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-white border-buttontext text-buttontext  hover:bg-gray-50"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ClipLoader color="white" size={20} />
-              ) : (
-                <Image className="w-4 h-4" />
-              )}
-              {isLoading ? "Creating..." : "Create Announcement"}
-            </Button>
+          {/* Footer */}
+          <div className="sticky bottom-0 px-8 py-6 bg-white border-t border-gray-200 rounded-3xl">
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                className="px-8 py-3 transition-colors border-[2px] rounded-3xl bg-white border-buttontext text-buttontext  hover:bg-gray-50"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ClipLoader color="white" size={20} />
+                ) : (
+                  <Image className="w-4 h-4" />
+                )}
+                {isLoading ? "Creating..." : "Create Announcement"}
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
