@@ -28,6 +28,7 @@ import StatusChip from "../ui/StatusChip";
 import ViewAnnouncementDetails from "./ViewAnnouncementDetails";
 import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
+import { createAnnouncement } from "@/services/announcementServices";
 
 const dummyData = [
   {
@@ -223,26 +224,31 @@ const AnnounementTable = () => {
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Add new community to filtered data (at top)
-      const newCommunity = {
-        _id: Date.now().toString(),
-        ...newCommunityData,
-        dateCreated: new Date().toISOString().split("T")[0],
-        members: 0,
-        status: "active",
-        images: newCommunityData.images.map((img, idx) => ({
-          id: idx,
-          url: URL.createObjectURL(img),
-        })),
+      const payload = {
+        title: newCommunityData.title,
+        description: newCommunityData.description,
+        type: "text",
+        communityId: "69523e5ce4e6606aa7ac3d5b"
       };
 
-      setFilteredData([newCommunity, ...filteredData]);
-      setShowCreateModal(false);
+      const result = await createAnnouncement(payload);
+      
+      if (result.status) {
+        const newCommunity = {
+          _id: result.data._id,
+          title: result.data.title,
+          description: result.data.description,
+          dateCreated: new Date(result.data.createdAt).toISOString().split("T")[0],
+          members: 0,
+          status: result.data.status,
+          images: [],
+        };
+
+        setFilteredData([newCommunity, ...filteredData]);
+        setShowCreateModal(false);
+      }
     } catch (error) {
-      console.error("Failed to create community:", error);
+      console.error("Failed to create announcement:", error);
     } finally {
       setIsProcessing(false);
     }
