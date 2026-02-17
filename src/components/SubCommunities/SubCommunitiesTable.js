@@ -19,6 +19,7 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import CreateSubCommunityModal from "./CreateSubCommunityModal";
 import ViewSubCommunityModal from "./ViewSubCommunityModal";
 import EditSubCommunityModal from "./EditSubCommunityModal";
+import StatusChip from "../ui/StatusChip";
 import { createSubCommunity, getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const dummyData = [
@@ -354,14 +355,13 @@ const SubCommunitiesTable = () => {
   const handleInactiveConfirm = async () => {
     setIsProcessing(true);
     try {
-      // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, status: "inactive" } : item
-        )
+      const updatedData = filteredData.map((item) =>
+        item._id === selectedItem._id ? { ...item, status: "inactive" } : item
       );
+      setFilteredData(updatedData);
+      setOriginalData(updatedData);
       setShowInactiveModal(false);
     } catch (error) {
       console.error("Failed to inactive sub-community:", error);
@@ -462,7 +462,7 @@ const SubCommunitiesTable = () => {
 
       <div className="flex items-center justify-between m-4 mb-6">
         <InputWithLabel
-          placeholder="Search by title or description"
+          placeholder="Search by name"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md rounded-full text-zinc-500"
@@ -513,6 +513,9 @@ const SubCommunitiesTable = () => {
                 Members
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
+                Status
+              </TableHead>
+              <TableHead className="text-sm font-normal text-left text-white">
                 Action
               </TableHead>
             </TableRow>
@@ -521,7 +524,7 @@ const SubCommunitiesTable = () => {
             {currentPageData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-12 text-center text-gray-500"
                 >
                   {filteredData.length === 0
@@ -556,6 +559,9 @@ const SubCommunitiesTable = () => {
                     <span className="text-sm font-normal text-black-3">
                       {item?.members || 0}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <StatusChip status={item?.status || "inactive"} />
                   </TableCell>
                   <TableCell className="flex items-center">
                     <Popuplist>
