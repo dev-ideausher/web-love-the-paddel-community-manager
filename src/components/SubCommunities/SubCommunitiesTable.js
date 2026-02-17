@@ -273,8 +273,8 @@ const SubCommunitiesTable = () => {
     const timeoutId = setTimeout(() => {
       const filtered = originalData.filter(
         (item) =>
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          (item.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (item.description || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       setFilteredData(filtered);
