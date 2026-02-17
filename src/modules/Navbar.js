@@ -9,6 +9,7 @@ import {
   removeUser,
 } from "@/services/firebase-services/cookies";
 import { BeatLoader } from "react-spinners";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 const sidebarBtns = [
   { name: "Dashboard", path: "dashboard" },
@@ -48,6 +49,7 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = React.useState(null);
   const [isReady, setIsReady] = React.useState(false);
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const pathname = usePathname();
 
   React.useEffect(() => {
@@ -109,8 +111,18 @@ export default function Navbar() {
         </div>
       </div>
 
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Yes, Logout"
+        cancelText="Cancel"
+      />
+
       <button
-        onClick={handleLogout}
+        onClick={() => setShowLogoutModal(true)}
         className="flex items-center gap-2 cursor-pointer sidebarBtn h-9 hover:bg-primary-2"
       >
         <p className="text-base text-primary-6 text-body-1">Logout</p>

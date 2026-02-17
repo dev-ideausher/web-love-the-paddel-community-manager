@@ -1,6 +1,7 @@
 import React from "react";
 import { sendPasswordResetLink } from "@/services/profileServices";
 import { toast } from "react-toastify";
+import { auth } from "@/services/firebase-services/firebase";
 
 const Field = ({ label, children }) => (
   <div className="flex flex-col pt-4 space-y-1">
@@ -14,9 +15,17 @@ const Field = ({ label, children }) => (
 const SettingsPanel = () => {
   const inputStyle =
     "w-full px-4 py-3 max-w-md bg-[#F5F7F5] border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition";
-  const [fullName, setFullName] = React.useState("John Doe");
-  const [email, setEmail] = React.useState("john.doe@example.com");
+  const [fullName, setFullName] = React.useState("");
+  const [email, setEmail] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setFullName(user.displayName || "");
+      setEmail(user.email || "");
+    }
+  }, []);
 
   const handleSendResetLink = async () => {
     if (!email) {

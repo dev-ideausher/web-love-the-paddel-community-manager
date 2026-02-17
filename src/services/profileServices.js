@@ -1,7 +1,7 @@
 import { apiError, appendQueryParams, getAuthToken, responseValidator, URL } from "./api/helper";
 
 export const getProfile = async () => {
-    let endpoint = `${URL}/admin/profile`
+    let endpoint = `${URL}/users/community-manager/settings`
     const token = await getAuthToken();
     const myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${token}`);
