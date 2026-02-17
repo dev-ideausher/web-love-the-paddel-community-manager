@@ -42,4 +42,23 @@ export const updateProfile = async (payload) => {
       return apiError(error);
     }
   };
-  
+
+export const sendPasswordResetLink = async (email) => {
+  let endpoint = `${URL}/auth/reset-password`;
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: JSON.stringify({ email }),
+    redirect: "follow"
+  };
+
+  try {
+    const response = await fetch(endpoint, requestOptions);
+    return responseValidator(response, true);
+  } catch (error) {
+    return apiError(error);
+  }
+};

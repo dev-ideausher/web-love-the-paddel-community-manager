@@ -250,6 +250,7 @@ const AnnounementTable = () => {
           members: 0,
           status: item.status || "active",
           images: item.images || [],
+          svgType: item.svgType || "GENERAL",
         }));
         setOriginalData(formattedData);
         setFilteredData(formattedData);
@@ -272,6 +273,7 @@ const AnnounementTable = () => {
         title: newCommunityData.title,
         description: newCommunityData.description,
         type: "text",
+        svgType: newCommunityData.svgType,
         communityId
       };
 
@@ -540,6 +542,9 @@ const AnnounementTable = () => {
                 Date Created
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
+                Type
+              </TableHead>
+              <TableHead className="text-sm font-normal text-left text-white">
                 Status
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
@@ -551,7 +556,7 @@ const AnnounementTable = () => {
             {currentPageData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-12 text-center text-gray-500"
                 >
                   {filteredData.length === 0
@@ -583,6 +588,11 @@ const AnnounementTable = () => {
                   <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
                       {item?.dateCreated || "N/A"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-left">
+                    <span className="text-sm font-normal text-black-3">
+                      {item?.svgType || "GENERAL"}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">

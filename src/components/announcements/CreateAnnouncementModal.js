@@ -9,6 +9,13 @@ const subCommunities = [
   "Announcements",
   "Media",
 ];
+
+const announcementTypes = [
+  { value: "GENERAL", label: "General" },
+  { value: "ANNOUNCEMENT", label: "Announcement" },
+  { value: "EVENT", label: "Event" },
+  { value: "TOURNAMENT", label: "Tournament" },
+];
 const CreateAnnouncementModal = ({
   isOpen,
   onClose,
@@ -19,7 +26,7 @@ const CreateAnnouncementModal = ({
     title: "",
     description: "",
     subCommunity: "",
-    
+    svgType: "",
   });
 
   const [images, setImages] = useState([]);
@@ -117,7 +124,7 @@ const CreateAnnouncementModal = ({
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setFormData({ title: "", description: "", subCommunity: "" });
+      setFormData({ title: "", description: "", subCommunity: "", svgType: "" });
       setImages([]);
       setImagePreviews([]);
       setErrors({});
@@ -219,6 +226,40 @@ const CreateAnnouncementModal = ({
               {errors.subCommunity && (
                 <p className="mt-1 text-sm text-red-600">
                   {errors.subCommunity}
+                </p>
+              )}
+            </div>
+
+            {/* Announcement Type */}
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">
+                Announcement Type *
+              </label>
+
+              <select
+                value={formData.svgType}
+                onChange={(e) =>
+                  handleInputChange("svgType", e.target.value)
+                }
+                className={`w-full px-4 py-3 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.svgType ? "border-red-300" : "border-gray-200"
+                }`}
+                disabled={isLoading}
+              >
+                <option value="" disabled>
+                  Select announcement type
+                </option>
+
+                {announcementTypes.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              {errors.svgType && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.svgType}
                 </p>
               )}
             </div>

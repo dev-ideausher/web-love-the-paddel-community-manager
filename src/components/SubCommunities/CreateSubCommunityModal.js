@@ -13,6 +13,7 @@ const CreateSubCommunityModal = ({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    status: "active",
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -174,6 +175,22 @@ const CreateSubCommunityModal = ({
                     {errors.description}
                   </p>
                 )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">
+                  Status *
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => handleInputChange("status", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
               </div>
 
               {/* Images Upload */}
