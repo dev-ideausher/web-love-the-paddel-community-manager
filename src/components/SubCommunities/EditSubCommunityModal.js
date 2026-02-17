@@ -30,6 +30,7 @@ const EditSubCommunityModal = ({
       });
       setImages([]);
       setImagePreviews([]);
+      setErrors({});
     }
   }, [isOpen, initialData]);
 
@@ -124,7 +125,10 @@ const EditSubCommunityModal = ({
             <h2 className="text-xl font-semibold text-black-1">{title}</h2>
             <button
               className="text-2xl text-gray-500 hover:text-gray-700"
-              onClick={onClose}
+              onClick={() => {
+                setErrors({});
+                onClose();
+              }}
             >
               ×
             </button>
@@ -252,7 +256,10 @@ const EditSubCommunityModal = ({
             <Button
               type="button"
               className="py-2 px-6 border-2 bg-[#F5F7F5] text-primary rounded-full"
-              onClick={onClose}
+              onClick={() => {
+                setErrors({});
+                onClose();
+              }}
               disabled={isLoading}
             >
               Cancel
