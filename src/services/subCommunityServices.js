@@ -115,7 +115,7 @@ export const createSubCommunities = async (payload) => {
 };
 
 export const createSubCommunity = async (payload) => {
-  const endpoint = `${URL}/communities/`;
+  const endpoint = `${URL}/communities`;
   const token = await getAuthToken();
 
   const myHeaders = new Headers();
@@ -130,20 +130,11 @@ export const createSubCommunity = async (payload) => {
 
   try {
     const response = await fetch(endpoint, requestOptions);
-    const text = await response.text();
-    console.log('Raw response:', text);
-    
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch (e) {
-      result = { status: false, message: text };
-    }
-    
-    console.log('createSubCommunity result:', result);
+    const result = await responseValidator(response, true);
+    console.log('Create response:', result);
     return result;
   } catch (error) {
-    console.error('createSubCommunity error:', error);
+    console.error('Create error:', error);
     return apiError(error);
   }
 };

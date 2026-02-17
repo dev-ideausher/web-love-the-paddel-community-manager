@@ -19,7 +19,7 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import CreateSubCommunityModal from "./CreateSubCommunityModal";
 import ViewSubCommunityModal from "./ViewSubCommunityModal";
 import EditSubCommunityModal from "./EditSubCommunityModal";
-import { createSubCommunity } from "@/services/subCommunityServices";
+import { createSubCommunity, getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const dummyData = [
   {
@@ -170,8 +170,9 @@ const dummyData = [
 
 const SubCommunitiesTable = () => {
   const [isClient, setIsClient] = useState(false);
-  const [allData, setAllData] = useState(dummyData);
-  const [filteredData, setFilteredData] = useState(dummyData);
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
@@ -190,6 +191,42 @@ const SubCommunitiesTable = () => {
   const [selectedDelete, setSelectedDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Fetch sub-communities from API
+  const fetchSubCommunities = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getSubCommunitiesList({});
+      console.log('Fetch response:', response);
+      if (response.status && response.data) {
+        console.log('Response data:', response.data);
+        const dataArray = Array.isArray(response.data.results) ? response.data.results : [];
+        console.log('Data array:', dataArray);
+        const filtered = dataArray.filter(item => item.parentCommunity === parentCommunityId);
+        const formattedData = filtered.map(item => ({
+          _id: item._id,
+          title: item.name,
+          description: item.description,
+          dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
+          members: item.members?.length || 0,
+          status: item.status || "active",
+          images: item.images || [],
+        }));
+        console.log('Formatted data:', formattedData);
+        setOriginalData(formattedData);
+        setFilteredData(formattedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sub-communities:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [parentCommunityId]);
+
+  useEffect(() => {
+    fetchSubCommunities();
+  }, [fetchSubCommunities]);
+
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
     try {
@@ -205,29 +242,15 @@ const SubCommunitiesTable = () => {
         description: newCommunityData.description,
         parentCommunity: newCommunityData.parentCommunity,
         isSubCommunity: true,
-        tagline: newCommunityData.title,
+        tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
-
-      console.log('Creating sub-community with payload:', payload);
+      
       const response = await createSubCommunity(payload);
-      console.log('API Response:', response);
+      console.log('Response received:', response);
       
       if (response.status) {
-        const newCommunity = {
-          _id: response.data._id,
-          title: response.data.name,
-          description: response.data.description,
-          dateCreated: new Date(response.data.createdAt).toISOString().split("T")[0],
-          members: response.data.members?.length || 0,
-          status: "active",
-          images: newCommunityData.images.map((img, idx) => ({
-            id: idx,
-            url: URL.createObjectURL(img),
-          })),
-        };
-
-        setFilteredData([newCommunity, ...filteredData]);
         setShowCreateModal(false);
+        await fetchSubCommunities();
       }
     } catch (error) {
       console.error("Failed to create community:", error);
@@ -249,7 +272,7 @@ const SubCommunitiesTable = () => {
   // Update filtered data based on search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      const filtered = dummyData.filter(
+      const filtered = originalData.filter(
         (item) =>
           item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -264,7 +287,7 @@ const SubCommunitiesTable = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, originalData]);
 
   // Update displayed data when pagination or filtered data changes
   useEffect(() => {

@@ -95,7 +95,6 @@ export const deleteMatches = async (id) => {
 export const createMatch = async (payload) => {
   const endpoint = `${URL}/communities/matches/`;
   const token = await getAuthToken();
-  console.log('Payload being sent:', payload);
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
   myHeaders.append("Content-Type", "application/json");
