@@ -28,7 +28,7 @@ import StatusChip from "../ui/StatusChip";
 import ViewAnnouncementDetails from "./ViewAnnouncementDetails";
 import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
-import { createAnnouncement } from "@/services/announcementServices";
+import { createAnnouncement, getAnnouncementsList } from "@/services/announcementServices";
 
 const dummyData = [
   {
@@ -202,8 +202,9 @@ const dummyData = [
 
 const AnnounementTable = () => {
   const [isClient, setIsClient] = useState(false);
-  const [allData, setAllData] = useState(dummyData);
-  const [filteredData, setFilteredData] = useState(dummyData);
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
@@ -211,6 +212,7 @@ const AnnounementTable = () => {
     limit: 10,
     totalPages: 1,
   });
+  const [communityId] = useState("69523e5ce4e6606aa7ac3d5b");
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -221,6 +223,48 @@ const AnnounementTable = () => {
   const [selectedDelete, setSelectedDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Fetch announcements from API
+  const fetchAnnouncements = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getAnnouncementsList({ limit: 100 });
+      if (response.status && response.data) {
+        const dataArray = Array.isArray(response.data.results) 
+          ? response.data.results 
+          : Array.isArray(response.data) 
+          ? response.data 
+          : [];
+        const filtered = dataArray.filter(item => {
+          const itemCommunityId = typeof item.communityId === 'object' && item.communityId?._id 
+            ? item.communityId._id 
+            : item.communityId;
+          return itemCommunityId === communityId || item.communityId?.name === 'Love the padel community';
+        });
+        const formattedData = filtered.map(item => ({
+          _id: item._id,
+          title: item.title,
+          subtitle: item.subtitle || "",
+          description: item.description,
+          dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
+          members: 0,
+          status: item.status || "active",
+          images: item.images || [],
+        }));
+        setOriginalData(formattedData);
+        setFilteredData(formattedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch announcements:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [communityId]);
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
     try {
@@ -228,24 +272,15 @@ const AnnounementTable = () => {
         title: newCommunityData.title,
         description: newCommunityData.description,
         type: "text",
-        communityId: "69523e5ce4e6606aa7ac3d5b"
+        communityId
       };
 
       const result = await createAnnouncement(payload);
       
       if (result.status) {
-        const newCommunity = {
-          _id: result.data._id,
-          title: result.data.title,
-          description: result.data.description,
-          dateCreated: new Date(result.data.createdAt).toISOString().split("T")[0],
-          members: 0,
-          status: result.data.status,
-          images: [],
-        };
-
-        setFilteredData([newCommunity, ...filteredData]);
         setShowCreateModal(false);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await fetchAnnouncements();
       }
     } catch (error) {
       console.error("Failed to create announcement:", error);
@@ -267,7 +302,7 @@ const AnnounementTable = () => {
   // Update filtered data based on search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      const filtered = dummyData.filter(
+      const filtered = originalData.filter(
         (item) =>
           item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -277,12 +312,12 @@ const AnnounementTable = () => {
       setPagination((prev) => ({
         ...prev,
         page: 1,
-        totalPages: Math.ceil(filtered.length / prev.limit),
+        totalPages: Math.ceil(filtered.length / prev.limit) || 1,
       }));
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, originalData]);
 
   // Update displayed data when pagination or filtered data changes
   useEffect(() => {
@@ -583,7 +618,7 @@ const AnnounementTable = () => {
           </TableBody>
         </Table>
 
-        <Pagination pagination={pagination} setPagination={setPagination} />
+        <Pagination pagination={pagination} setPagination={setPagination} totalItems={filteredData.length} />
       </div>
     </div>
   );

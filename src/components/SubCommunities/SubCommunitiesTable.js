@@ -196,10 +196,9 @@ const SubCommunitiesTable = () => {
   const fetchSubCommunities = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getSubCommunitiesList({});
+      const response = await getSubCommunitiesList({ limit: 100 });
       console.log('Fetch response:', response);
       if (response.status && response.data) {
-        console.log('Response data:', response.data);
         const dataArray = Array.isArray(response.data.results) ? response.data.results : [];
         console.log('Data array:', dataArray);
         const filtered = dataArray.filter(item => item.parentCommunity === parentCommunityId);
@@ -212,7 +211,6 @@ const SubCommunitiesTable = () => {
           status: item.status || "active",
           images: item.images || [],
         }));
-        console.log('Formatted data:', formattedData);
         setOriginalData(formattedData);
         setFilteredData(formattedData);
       }
@@ -244,12 +242,13 @@ const SubCommunitiesTable = () => {
         isSubCommunity: true,
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
-      
+
       const response = await createSubCommunity(payload);
       console.log('Response received:', response);
       
       if (response.status) {
         setShowCreateModal(false);
+        await new Promise(resolve => setTimeout(resolve, 500));
         await fetchSubCommunities();
       }
     } catch (error) {
@@ -282,7 +281,7 @@ const SubCommunitiesTable = () => {
       setPagination((prev) => ({
         ...prev,
         page: 1,
-        totalPages: Math.ceil(filtered.length / prev.limit),
+        totalPages: Math.ceil(filtered.length / prev.limit) || 1,
       }));
     }, 300);
 
@@ -592,7 +591,7 @@ const SubCommunitiesTable = () => {
           </TableBody>
         </Table>
 
-        <Pagination pagination={pagination} setPagination={setPagination} />
+        <Pagination pagination={pagination} setPagination={setPagination} totalItems={filteredData.length} />
       </div>
     </div>
   );

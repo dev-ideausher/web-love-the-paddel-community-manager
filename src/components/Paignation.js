@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDown, ChevronDown, ChevronsDownIcon } from "lucide-react";
 
-const Pagination = ({ pagination, setPagination }) => {
+const Pagination = ({ pagination, setPagination, totalItems = 0 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const limits = [5, 10, 20, 50];
 
@@ -30,6 +30,7 @@ const Pagination = ({ pagination, setPagination }) => {
                                         ...prev,
                                         limit,
                                         page: 1,
+                                        totalPages: Math.ceil(totalItems / limit) || 1,
                                     }));
                                     setIsOpen(false);
                                 }}
@@ -47,7 +48,7 @@ const Pagination = ({ pagination, setPagination }) => {
             {/* Pagination */}
             <div className="flex items-center">
                 <button
-                    className="px-3 py-1 text-sm text-[#828282] hover:text-primary"
+                    className="px-3 py-1 text-sm text-[#828282] hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={pagination.page === 1}
                     onClick={() =>
                         setPagination((prev) => ({
@@ -59,7 +60,7 @@ const Pagination = ({ pagination, setPagination }) => {
                     Previous
                 </button>
 
-                {pagination.totalPages > 5 ? (
+                {Math.ceil(totalItems / pagination.limit) > 5 ? (
                     <>
                         <button
                             className={`px-3 py-1 border border-primary rounded-[10px] mx-1 ${pagination.page === 1 ? "bg-primary text-white" : "text-[#828282] hover:bg-primary hover:text-white"}`}
@@ -70,7 +71,8 @@ const Pagination = ({ pagination, setPagination }) => {
                         {pagination.page > 3 && <span className="px-2">...</span>}
                         {Array.from({ length: 5 }, (_, index) => {
                             const pageNumber = pagination.page - 2 + index;
-                            if (pageNumber > 1 && pageNumber < pagination.totalPages) {
+                            const totalPages = Math.ceil(totalItems / pagination.limit);
+                            if (pageNumber > 1 && pageNumber < totalPages) {
                                 return (
                                     <button
                                         key={pageNumber}
@@ -83,16 +85,16 @@ const Pagination = ({ pagination, setPagination }) => {
                             }
                             return null;
                         })}
-                        {pagination.page < pagination.totalPages - 2 && <span className="px-2">...</span>}
+                        {pagination.page < Math.ceil(totalItems / pagination.limit) - 2 && <span className="px-2">...</span>}
                         <button
-                            className={`px-3 py-1 border border-primary rounded-[10px] mx-1 ${pagination.page === pagination.totalPages ? "bg-primary text-white" : "text-[#828282] hover:bg-primary hover:text-white"}`}
-                            onClick={() => setPagination((prev) => ({ ...prev, page: pagination.totalPages }))}
+                            className={`px-3 py-1 border border-primary rounded-[10px] mx-1 ${pagination.page === Math.ceil(totalItems / pagination.limit) ? "bg-primary text-white" : "text-[#828282] hover:bg-primary hover:text-white"}`}
+                            onClick={() => setPagination((prev) => ({ ...prev, page: Math.ceil(totalItems / pagination.limit) }))}
                         >
-                            {pagination.totalPages}
+                            {Math.ceil(totalItems / pagination.limit)}
                         </button>
                     </>
                 ) : (
-                    Array.from({ length: pagination.totalPages }, (_, index) => (
+                    Array.from({ length: Math.ceil(totalItems / pagination.limit) }, (_, index) => (
                         <button
                             key={index + 1}
                             className={`px-3 py-1 border border-primary rounded-[10px] mx-1 ${pagination.page === index + 1 ? "bg-primary text-white" : "text-[#828282] hover:bg-primary hover:text-white"}`}
@@ -104,12 +106,12 @@ const Pagination = ({ pagination, setPagination }) => {
                 )}
 
                 <button
-                    className="px-3 py-1 text-sm text-[#828282] hover:text-primary"
-                    disabled={pagination.page === pagination.totalPages}
+                    className="px-3 py-1 text-sm text-[#828282] hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={pagination.page >= Math.ceil(totalItems / pagination.limit)}
                     onClick={() =>
                         setPagination((prev) => ({
                             ...prev,
-                            page: Math.min(prev.page + 1, pagination.totalPages),
+                            page: Math.min(prev.page + 1, Math.ceil(totalItems / pagination.limit)),
                         }))
                     }
                 >
