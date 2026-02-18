@@ -115,7 +115,7 @@ export const createSubCommunities = async (payload) => {
 };
 
 export const createSubCommunity = async (payload) => {
-  const endpoint = `${URL}/communities`;
+  const endpoint = `${URL}/communities/`;
   const token = await getAuthToken();
 
   const myHeaders = new Headers();

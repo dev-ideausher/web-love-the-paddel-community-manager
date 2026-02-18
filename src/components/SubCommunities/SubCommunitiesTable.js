@@ -203,15 +203,27 @@ const SubCommunitiesTable = () => {
         const dataArray = Array.isArray(response.data.results) ? response.data.results : [];
         console.log('Data array:', dataArray);
         const filtered = dataArray.filter(item => item.parentCommunity === parentCommunityId);
-        const formattedData = filtered.map(item => ({
-          _id: item._id,
-          title: item.name,
-          description: item.description,
-          dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
-          members: item.members?.length || 0,
-          status: item.status || "active",
-          images: item.images || [],
-        }));
+        const formattedData = filtered.map(item => {
+          console.log('Item location:', item.location);
+          let locationStr = "";
+          if (item.location) {
+            if (typeof item.location === 'string') {
+              locationStr = item.location;
+            } else if (item.location.streetAddress) {
+              locationStr = item.location.streetAddress;
+            }
+          }
+          return {
+            _id: item._id,
+            title: item.name,
+            description: item.description,
+            dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
+            members: item.members?.length || 0,
+            status: item.status || "active",
+            images: item.images || [],
+            location: locationStr,
+          };
+        });
         setOriginalData(formattedData);
         setFilteredData(formattedData);
       }
@@ -236,6 +248,9 @@ const SubCommunitiesTable = () => {
         return;
       }
 
+      console.log('newCommunityData received:', newCommunityData);
+      console.log('Location value:', newCommunityData.location);
+
       const payload = {
         name: newCommunityData.title,
         description: newCommunityData.description,
@@ -244,6 +259,22 @@ const SubCommunitiesTable = () => {
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
 
+      // Only add location if it exists
+      if (newCommunityData.location) {
+        payload.location = {
+          streetAddress: newCommunityData.location,
+          country: "India",
+          city: "New Delhi",
+          state: "Delhi",
+          postalCode: "110016",
+          position: {
+            type: "Point",
+            coordinates: [77.2065, 28.5494]
+          }
+        };
+      }
+
+      console.log('Creating sub-community with payload:', payload);
       const response = await createSubCommunity(payload);
       console.log('Response received:', response);
       

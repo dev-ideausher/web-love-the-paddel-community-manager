@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { X, Upload, Image, Trash2 } from "lucide-react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 const CreateSubCommunityModal = ({
   isOpen,
@@ -14,10 +15,21 @@ const CreateSubCommunityModal = ({
     title: "",
     description: "",
     status: "active",
+    location: "",
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [errors, setErrors] = useState({});
+  const [showMap, setShowMap] = useState(true);
+  const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
+  const [inputRef, setInputRef] = useState(null);
+  
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
+  });
 
   // Handle form input changes
   const handleInputChange = useCallback(
@@ -29,6 +41,82 @@ const CreateSubCommunityModal = ({
     },
     [errors]
   );
+
+  // Initialize autocomplete
+  useEffect(() => {
+    if (isLoaded && inputRef && !autocomplete) {
+      console.log('Initializing autocomplete...');
+      console.log('Google Maps loaded:', !!window.google?.maps);
+      console.log('Input ref:', inputRef);
+      
+      try {
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef, {
+          fields: ["formatted_address", "geometry", "name"],
+        });
+
+        console.log('Autocomplete instance created:', autocompleteInstance);
+
+        autocompleteInstance.addListener("place_changed", () => {
+          const place = autocompleteInstance.getPlace();
+          console.log('Place selected:', place);
+          if (place.geometry) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setSelectedPosition({ lat, lng });
+            setMapCenter({ lat, lng });
+            const address = place.formatted_address || place.name;
+            setFormData(prev => ({ ...prev, location: address }));
+            if (inputRef) {
+              inputRef.value = address;
+            }
+          }
+        });
+
+        setAutocomplete(autocompleteInstance);
+      } catch (error) {
+        console.error('Error initializing autocomplete:', error);
+      }
+    }
+  }, [isLoaded, inputRef, autocomplete]);
+
+  // Fix autocomplete dropdown z-index
+  useEffect(() => {
+    if (isLoaded) {
+      const style = document.createElement('style');
+      style.innerHTML = '.pac-container { z-index: 10000 !important; }';
+      document.head.appendChild(style);
+      return () => document.head.removeChild(style);
+    }
+  }, [isLoaded]);
+
+  // Handle map click
+  const handleMapClick = (event) => {
+    if (!isLoaded || !window.google?.maps) return;
+
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    setSelectedPosition({ lat, lng });
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.[0]) {
+        const address = results[0].formatted_address;
+        handleInputChange("location", address);
+      }
+    });
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setSelectedPosition({ lat, lng });
+        setMapCenter({ lat, lng });
+        handleMapClick({ latLng: { lat: () => lat, lng: () => lng } });
+      });
+    }
+  };
 
   // Handle image selection
   const handleImageSelect = useCallback(
@@ -191,6 +279,41 @@ const CreateSubCommunityModal = ({
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+              </div>
+
+              {/* Location Field */}
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">
+                  Location
+                </label>
+                <input
+                  ref={setInputRef}
+                  defaultValue={formData.location}
+                  onBlur={(e) => handleInputChange("location", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+                  placeholder="Type location or use map below"
+                />
+                {isLoaded && (
+                  <div className="bg-white border rounded-lg shadow-sm p-2">
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2 text-sm text-blue-600"
+                    >
+                      📍 Use my current location
+                    </button>
+                    <div className="h-64 w-full rounded-lg overflow-hidden">
+                      <GoogleMap
+                        center={mapCenter}
+                        zoom={14}
+                        mapContainerStyle={{ width: "100%", height: "100%" }}
+                        onClick={handleMapClick}
+                      >
+                        {selectedPosition && <Marker position={selectedPosition} />}
+                      </GoogleMap>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Images Upload */}
