@@ -267,7 +267,7 @@ const CreateAnnouncementModal = ({
             {/* Images Upload */}
             <div>
               <label className="block mb-3 text-sm font-semibold text-gray-700">
-                Community Images (Max 20)
+                Community Images
               </label>
               <div className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
                 <input

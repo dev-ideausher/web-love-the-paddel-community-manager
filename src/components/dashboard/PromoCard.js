@@ -6,17 +6,17 @@ const PromoCard = ({ summary }) => {
   const router = useRouter();
   const metricsData = [
     {
-      title: "Total Sub-Communities",
+      title: "totalSubCommunities",
       value: summary?.totalSubCommunities || 0,
       image: "/icons/community.svg",
     },
     {
-      title: "Active Matches",
+      title: "activeMatches",
       value: summary?.activeMatches || 0,
       image: "/icons/activematches.svg",
     },
     {
-      title: "Total Transactions",
+      title: "totalTransactions",
       value: summary?.totalTransactions || 0,
       image: "/icons/totaltransactions.svg",
     },

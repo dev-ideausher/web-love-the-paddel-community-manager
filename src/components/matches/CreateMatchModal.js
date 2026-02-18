@@ -29,6 +29,7 @@ const CreateMatchModal = ({
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -48,6 +49,7 @@ const CreateMatchModal = ({
   useEffect(() => {
     if (isOpen) {
       setFormData(EMPTY_FORM);
+      setErrors({});
       // Reset location details when modal opens
       setLocationDetails({
         formattedAddress: "",
@@ -133,7 +135,11 @@ const CreateMatchModal = ({
       
       return newData;
     });
-  }, []);
+    
+    if (errors[key]) {
+      setErrors(prev => ({ ...prev, [key]: "" }));
+    }
+  }, [errors]);
 
   const toggleSkill = (skill) => {
     setFormData((prev) => ({
@@ -154,6 +160,24 @@ const CreateMatchModal = ({
   
 const handleSubmit = (e) => {
   e.preventDefault();
+
+  const newErrors = {};
+  
+  if (!formData.name.trim()) newErrors.name = "Match name is required";
+  if (!formData.subCommunity) newErrors.subCommunity = "Sub community is required";
+  if (!formData.duration) newErrors.duration = "Duration is required";
+  if (!formData.matchType) newErrors.matchType = "Match type is required";
+  if (!formData.matchMode) newErrors.matchMode = "Match mode is required";
+  if (!formData.date) newErrors.date = "Date is required";
+  if (!formData.startTime) newErrors.startTime = "Start time is required";
+  if (!formData.maxPlayers) newErrors.maxPlayers = "Max players is required";
+  if (!formData.price) newErrors.price = "Price is required";
+  if (!formData.location) newErrors.location = "Location is required";
+  
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
   const dateStr = formData.date.split("T")[0];
   const lng = selectedPosition?.lng || 0;
@@ -214,20 +238,20 @@ const handleSubmit = (e) => {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          <Field label="Match Name">
+          <Field label="Match Name" error={errors.name}>
             <input
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.name ? 'border-red-300' : ''}`}
               placeholder="Enter match name"
             />
           </Field>
 
-          <Field label="Sub Community">
+          <Field label="Sub Community" error={errors.subCommunity}>
             <select
               value={formData.subCommunity || ""}
               onChange={(e) => handleChange("subCommunity", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.subCommunity ? 'border-red-300' : ''}`}
             >
               <option value="">Select</option>
               <option value="master">Master community</option>
@@ -237,11 +261,11 @@ const handleSubmit = (e) => {
             </select>
           </Field>
 
-          <Field label="Match Duration">
+          <Field label="Match Duration" error={errors.duration}>
             <select
               value={formData.duration}
               onChange={(e) => handleChange("duration", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.duration ? 'border-red-300' : ''}`}
             >
               <option value="">Select</option>
               <option>30 mins</option>
@@ -252,11 +276,11 @@ const handleSubmit = (e) => {
             </select>
           </Field>
 
-          <Field label="Match Type">
+          <Field label="Match Type" error={errors.matchType}>
             <select
               value={formData.matchType}
               onChange={(e) => handleChange("matchType", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.matchType ? 'border-red-300' : ''}`}
             >
               <option value="">Select</option>
               <option>Verified</option>
@@ -271,11 +295,11 @@ const handleSubmit = (e) => {
             )}
           </Field>
 
-          <Field label="Match Mode">
+          <Field label="Match Mode" error={errors.matchMode}>
             <select
               value={formData.matchMode}
               onChange={(e) => handleChange("matchMode", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.matchMode ? 'border-red-300' : ''}`}
             >
               <option value="friendly">Friendly</option>
               <option value="matchplay">Match Play</option>
@@ -310,23 +334,23 @@ const handleSubmit = (e) => {
           </Field>
 
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Date">
+            <Field label="Date" error={errors.date}>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleChange("date", e.target.value)}
-                className={inputStyle}
+                className={`${inputStyle} ${errors.date ? 'border-red-300' : ''}`}
               />
             </Field>
 
-            <Field label="Start Time">
+            <Field label="Start Time" error={errors.startTime}>
               <input
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => {
                   handleChange("startTime", e.target.value);
                 }}
-                className={inputStyle}
+                className={`${inputStyle} ${errors.startTime ? 'border-red-300' : ''}`}
               />
             </Field>
 
@@ -340,28 +364,28 @@ const handleSubmit = (e) => {
             </Field>
           </div>
 
-          <Field label="Max Players">
+          <Field label="Max Players" error={errors.maxPlayers}>
             <input
               type="number"
               value={formData.maxPlayers}
               onChange={(e) => handleChange("maxPlayers", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.maxPlayers ? 'border-red-300' : ''}`}
               placeholder="16"
             />
           </Field>
 
-          <Field label="Price">
+          <Field label="Price" error={errors.price}>
             <input
               type="number"
               step="0.01"
               value={formData.price}
               onChange={(e) => handleChange("price", e.target.value)}
-              className={inputStyle}
+              className={`${inputStyle} ${errors.price ? 'border-red-300' : ''}`}
               placeholder="0.00"
             />
           </Field>
 
-          <Field label="Match Location">
+          <Field label="Match Location" error={errors.location}>
             <div className="relative">
               <input
                 value={formData.location}
@@ -420,12 +444,13 @@ const handleSubmit = (e) => {
   );
 };
 
-const Field = ({ label, children }) => (
+const Field = ({ label, children, error }) => (
   <div className="flex flex-col space-y-1">
     <label className="text-sm font-medium text-gray-900">
       {label} <span className="text-red-500">*</span>
     </label>
     {children}
+    {error && <p className="text-xs text-red-600">{error}</p>}
   </div>
 );
 
