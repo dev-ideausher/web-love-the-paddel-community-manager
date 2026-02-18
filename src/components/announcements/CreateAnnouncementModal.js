@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { X, Upload, Image, Trash2 } from "lucide-react";
+import { X, Upload, ImageIcon, Trash2 } from "lucide-react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 const subCommunities = [
@@ -337,7 +337,7 @@ const CreateAnnouncementModal = ({
                 {isLoading ? (
                   <ClipLoader color="white" size={20} />
                 ) : (
-                  <Image className="w-4 h-4" />
+                  <ImageIcon className="w-4 h-4" />
                 )}
                 {isLoading ? "Creating..." : "Create Announcement"}
               </Button>

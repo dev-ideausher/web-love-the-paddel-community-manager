@@ -1,21 +1,39 @@
 import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../Button";
 
 const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageUrls, setImageUrls] = useState([]);
   const images = data?.images || [];
+
+  useEffect(() => {
+    const urls = images.map(img => {
+      if (typeof img === 'string') return img;
+      if (img?.url) return img.url;
+      if (img instanceof File) return URL.createObjectURL(img);
+      return null;
+    }).filter(Boolean);
+    
+    setImageUrls(urls);
+    
+    return () => {
+      urls.forEach(url => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
+    };
+  }, [images]);
 
   if (!isOpen || !data) return null;
 
   console.log("data images:", data);
 
   const goToPrevious = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentImageIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentImageIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1));
   };
 
   const goToImage = (index) => {
@@ -55,18 +73,17 @@ const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
           </div>
 
           {/* Slideshow - Added Only Here */}
-          {images.length > 0 && (
+          {imageUrls.length > 0 && (
             <div className="space-y-2">
               {/* Main Image with Navigation */}
               <div className="relative group">
                 <img
-                  src={
-                    images[currentImageIndex]?.url || images[currentImageIndex]
-                  }
+                  src={imageUrls[currentImageIndex]}
                   alt="Community image"
                   className="object-cover w-full h-48 rounded-xl"
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
-                {images.length > 1 && (
+                {imageUrls.length > 1 && (
                   <>
                     <button
                       onClick={goToPrevious}

@@ -249,7 +249,7 @@ const AnnounementTable = () => {
           dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
           members: 0,
           status: item.status || "active",
-          images: item.images || [],
+          images: item.image ? [item.image] : [],
           svgType: item.svgType || "GENERAL",
         }));
         setOriginalData(formattedData);
@@ -494,7 +494,7 @@ const AnnounementTable = () => {
 
       <div className="flex items-center justify-between m-4 mb-6">
         <InputWithLabel
-          placeholder="Search by title or description"
+          placeholder="Search by title or Community"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md rounded-full text-zinc-500"
@@ -575,10 +575,12 @@ const AnnounementTable = () => {
                   <TableCell className="text-left">
                     <span className="text-sm font-normal font-medium truncate text-black-3">
                       {item?.title || "N/A"}
-                    </span>{" "}
-                    <span className="block max-w-xs text-sm font-light truncate font-extralight text-black-3">
-                      {item?.subtitle || "N/A"}
                     </span>
+                    {item?.subtitle && (
+                      <span className="block max-w-xs text-sm font-light truncate font-extralight text-black-3">
+                        {item.subtitle}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
