@@ -212,6 +212,9 @@ const SubCommunitiesTable = () => {
               locationStr = item.location;
             } else if (item.location.streetAddress) {
               locationStr = item.location.streetAddress;
+            } else if (item.location.position?.coordinates) {
+              const [lng, lat] = item.location.position.coordinates;
+              locationStr = `${lat}, ${lng}`;
             }
           }
           return {
@@ -223,6 +226,7 @@ const SubCommunitiesTable = () => {
             status: item.status || "active",
             images: item.images || [],
             location: locationStr,
+            locationData: item.location,
           };
         });
         setOriginalData(formattedData);
@@ -294,7 +298,8 @@ const SubCommunitiesTable = () => {
           position: {
             type: "Point",
             coordinates: [newCommunityData.locationCoords.lng, newCommunityData.locationCoords.lat]
-          }
+          },
+          streetAddress: newCommunityData.location
         };
       }
 
