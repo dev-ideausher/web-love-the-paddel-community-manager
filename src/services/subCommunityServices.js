@@ -69,6 +69,27 @@ export const getNotificationById = async (id, payload) => {
   }
 };
 
+export const deleteSubCommunity = async (communityId, subCommunityId) => {
+  const token = await getAuthToken();
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${token}`);
+
+  const endpoint = `${URL}/communities/sub-communities/${communityId}`;
+
+  const requestOptions = {
+    method: "DELETE",
+    headers: myHeaders,
+    redirect: "follow",
+  };
+
+  try {
+    const response = await fetch(endpoint, requestOptions);
+    return responseValidator(response, true);
+  } catch (e) {
+    return apiError(e);
+  }
+};
+
 export const deleteSubCommunities = async (id) => {
   const token = await getAuthToken();
   const myHeaders = new Headers();
@@ -121,6 +142,7 @@ export const createSubCommunity = async (payload) => {
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
   myHeaders.append("Content-Type", "application/json");
+  
   const requestOptions = {
     method: "POST",
     headers: myHeaders,
@@ -131,7 +153,6 @@ export const createSubCommunity = async (payload) => {
   try {
     const response = await fetch(endpoint, requestOptions);
     const result = await responseValidator(response, true);
-    console.log('Create response:', result);
     return result;
   } catch (error) {
     console.error('Create error:', error);

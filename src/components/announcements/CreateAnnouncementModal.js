@@ -44,22 +44,70 @@ const CreateAnnouncementModal = ({
     [errors]
   );
 
-  // Handle image selection
+  // Compress image
+  const compressImage = (file, maxSizeMB = 1) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 1920;
+          
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          }, 'image/jpeg', 0.8);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle image/video selection
   const handleImageSelect = useCallback(
-    (e) => {
+    async (e) => {
       const files = Array.from(e.target.files);
       const newImages = [];
       const newPreviews = [];
+      const maxVideoSize = 50 * 1024 * 1024; // 50MB for videos
+      const maxImageSize = 10 * 1024 * 1024; // 10MB for images
 
-      files.forEach((file) => {
-        if (
-          file.type.startsWith("image/") &&
-          images.length + newImages.length < 20
-        ) {
-          newImages.push(file);
-          newPreviews.push(URL.createObjectURL(file));
+      for (const file of files) {
+        if (images.length + newImages.length < 20) {
+          if (file.type.startsWith("image/")) {
+            if (file.size > maxImageSize) {
+              alert(`Image "${file.name}" is too large. Maximum size is 10MB.`);
+              continue;
+            }
+            const compressed = await compressImage(file);
+            newImages.push(compressed);
+            newPreviews.push(URL.createObjectURL(compressed));
+          } else if (file.type.startsWith("video/")) {
+            if (file.size > maxVideoSize) {
+              alert(`Video "${file.name}" is too large. Maximum size is 50MB.`);
+              continue;
+            }
+            newImages.push(file);
+            newPreviews.push(URL.createObjectURL(file));
+          }
         }
-      });
+      }
 
       setImages((prev) => [...prev, ...newImages]);
       setImagePreviews((prev) => [...prev, ...newPreviews]);
@@ -264,17 +312,20 @@ const CreateAnnouncementModal = ({
               )}
             </div>
 
-            {/* Images Upload */}
+            {/* Images/Videos Upload */}
             <div>
               <label className="block mb-3 text-sm font-semibold text-gray-700">
-                Community Images
+                Media (Images/Videos)
               </label>
+              <p className="mb-2 text-xs text-gray-500">
+                Max file size: Images 10MB, Videos 50MB
+              </p>
               <div className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
                 <input
                   id="image-upload"
                   type="file"
                   multiple
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleImageSelect}
                   className="hidden"
                   disabled={images.length >= 20 || isLoading}
@@ -289,21 +340,29 @@ const CreateAnnouncementModal = ({
                 >
                   <Upload className="w-5 h-5" />
                   {images.length >= 20
-                    ? "Maximum images reached"
-                    : `Add images (${images.length}/20)`}
+                    ? "Maximum files reached"
+                    : `Add media (${images.length}/20)`}
                 </label>
               </div>
 
-              {/* Image Previews */}
+              {/* Media Previews */}
               {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 mt-6 sm:grid-cols-3 md:grid-cols-4">
                   {imagePreviews.map((preview, index) => (
                     <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="object-cover w-full h-24 rounded-xl"
-                      />
+                      {images[index]?.type.startsWith("video/") ? (
+                        <video
+                          src={preview}
+                          className="object-cover w-full h-24 rounded-xl"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="object-cover w-full h-24 rounded-xl"
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => removeImage(index)}

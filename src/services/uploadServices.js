@@ -1,6 +1,6 @@
-import { apiError, appendQueryParams, getAuthToken, responseValidator, URL } from "./api/helper";
+import { apiError, getAuthToken, responseValidator, URL } from "./api/helper";
 
-const compressImage = async (file) => {
+const compressImage = async (file, maxSizeMB = 1) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -9,7 +9,7 @@ const compressImage = async (file) => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const maxDimension = 1200;
+        const maxDimension = 1920;
         
         if (width > height && width > maxDimension) {
           height = (height * maxDimension) / width;
@@ -26,7 +26,7 @@ const compressImage = async (file) => {
         
         canvas.toBlob((blob) => {
           resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.5);
+        }, 'image/jpeg', 0.8);
       };
       img.src = e.target.result;
     };
@@ -34,46 +34,19 @@ const compressImage = async (file) => {
   });
 };
 
-export const getAnnouncementsList = async (payload) => {
-  let endpoint = `${URL}/announcements`;
+export const uploadFile = async (file) => {
+  const endpoint = `/api/proxy/files`;
   const token = await getAuthToken();
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
-  const queryParams = appendQueryParams(payload);
-  endpoint += queryParams;
-  const requestOptions = {
-    method: "GET",
-    headers: myHeaders,
-    redirect: "follow",
-  };
 
-  try {
-    const response = await fetch(`${endpoint}`, requestOptions);
-    return responseValidator(response);
-  } catch (error) {
-    return apiError(error);
+  let fileToUpload = file;
+  if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
+    fileToUpload = await compressImage(file);
   }
-};
-
-export const createAnnouncement = async (payload) => {
-  const endpoint = `/api/proxy/announcements/`;
-  const token = await getAuthToken();
-  const myHeaders = new Headers();
-  myHeaders.append("Authorization", `Bearer ${token}`);
 
   const formData = new FormData();
-  formData.append("title", payload.title);
-  formData.append("description", payload.description);
-  formData.append("communityId", payload.communityId);
-  formData.append("type", payload.type);
-  
-  if (payload.image) {
-    const compressed = await compressImage(payload.image);
-    formData.append("image", compressed);
-  }
-  if (payload.video) {
-    formData.append("video", payload.video);
-  }
+  formData.append("files", fileToUpload);
 
   const requestOptions = {
     method: "POST",
@@ -84,7 +57,13 @@ export const createAnnouncement = async (payload) => {
 
   try {
     const response = await fetch(endpoint, requestOptions);
-    return responseValidator(response, true);
+    const result = await responseValidator(response, true);
+    
+    if (result.status && result.data && result.data.length > 0) {
+      return { status: true, data: { url: result.data[0].url } };
+    }
+    
+    return result;
   } catch (error) {
     return apiError(error);
   }

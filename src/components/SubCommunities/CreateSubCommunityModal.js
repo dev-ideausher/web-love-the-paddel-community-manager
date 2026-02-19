@@ -19,6 +19,14 @@ const CreateSubCommunityModal = ({
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [profilePic, setProfilePic] = useState(null);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [socialLinks, setSocialLinks] = useState([
+    { platform: "instagram", url: "" },
+    { platform: "facebook", url: "" },
+    { platform: "x", url: "" },
+    { platform: "linkedin", url: "" },
+  ]);
   const [errors, setErrors] = useState({});
   const [showMap, setShowMap] = useState(true);
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
@@ -108,15 +116,59 @@ const CreateSubCommunityModal = ({
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setSelectedPosition({ lat, lng });
-        setMapCenter({ lat, lng });
-        handleMapClick({ latLng: { lat: () => lat, lng: () => lng } });
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setSelectedPosition({ lat, lng });
+          setMapCenter({ lat, lng });
+          
+          // Reverse geocode to get address
+          if (isLoaded && window.google?.maps) {
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+              if (status === "OK" && results?.[0]) {
+                const address = results[0].formatted_address;
+                handleInputChange("location", address);
+                if (inputRef) {
+                  inputRef.value = address;
+                }
+              }
+            });
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          alert('Unable to get your location. Please ensure location permissions are enabled or enter the location manually.');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
     }
   };
+
+  // Handle social link change
+  const handleSocialLinkChange = useCallback((platform, value) => {
+    setSocialLinks((prev) =>
+      prev.map((link) =>
+        link.platform === platform ? { ...link, url: value } : link
+      )
+    );
+  }, []);
+
+  // Handle profile pic selection
+  const handleProfilePicSelect = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      setProfilePic(file);
+      setProfilePicPreview(URL.createObjectURL(file));
+    }
+  }, []);
 
   // Handle image selection
   const handleImageSelect = useCallback(
@@ -183,16 +235,19 @@ const CreateSubCommunityModal = ({
       onSave({
         ...formData,
         images,
+        profilePic,
+        socialLinks: socialLinks.filter(link => link.url.trim() !== ""),
         parentCommunity: parentCommunityId,
       });
     },
-    [formData, images, onSave, validateForm, parentCommunityId]
+    [formData, images, profilePic, socialLinks, onSave, validateForm, parentCommunityId]
   );
 
   // Cleanup image previews on unmount
   useEffect(() => {
     return () => {
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      if (profilePicPreview) URL.revokeObjectURL(profilePicPreview);
     };
   }, []);
 
@@ -281,6 +336,76 @@ const CreateSubCommunityModal = ({
                 </select>
               </div>
 
+              {/* Profile Picture */}
+              <div>
+                <label className="block mb-3 text-sm font-semibold text-gray-700">
+                  Profile Picture
+                </label>
+                <div className="p-6 text-center transition-colors border-2 border-gray-300 border-dashed rounded-2xl hover:border-gray-400">
+                  <input
+                    id="profile-pic-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePicSelect}
+                    className="hidden"
+                    disabled={isLoading}
+                  />
+                  <label
+                    htmlFor="profile-pic-upload"
+                    className="cursor-pointer inline-flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    <Upload className="w-5 h-5" />
+                    {profilePic ? "Change profile picture" : "Upload profile picture"}
+                  </label>
+                </div>
+                {profilePicPreview && (
+                  <div className="mt-4">
+                    <div className="relative inline-block">
+                      <img
+                        src={profilePicPreview}
+                        alt="Profile preview"
+                        className="object-cover w-32 h-32 rounded-full"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfilePic(null);
+                          setProfilePicPreview(null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full"
+                        disabled={isLoading}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Social Links */}
+              <div>
+                <label className="block mb-3 text-sm font-semibold text-gray-700">
+                  Social Links
+                </label>
+                <div className="space-y-3">
+                  {socialLinks.map((link) => (
+                    <div key={link.platform}>
+                      <label className="block mb-1 text-xs text-gray-600 capitalize">
+                        {link.platform === "x" ? "X (Twitter)" : link.platform}
+                      </label>
+                      <input
+                        type="url"
+                        value={link.url}
+                        onChange={(e) => handleSocialLinkChange(link.platform, e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder={`https://${link.platform === "x" ? "x.com" : link.platform + ".com"}/yourprofile`}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Location Field */}
               <div>
                 <label className="block mb-2 text-sm font-semibold text-gray-700">
@@ -341,7 +466,7 @@ const CreateSubCommunityModal = ({
                   >
                     <Upload className="w-5 h-5" />
                     {images.length >= 20
-                      ? "Maximum images reached"
+                      ? "Maximum files reached"
                       : `Add images (${images.length}/20)`}
                   </label>
                 </div>

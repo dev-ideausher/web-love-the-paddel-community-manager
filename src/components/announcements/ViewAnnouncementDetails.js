@@ -5,9 +5,9 @@ import Button from "../Button";
 const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageUrls, setImageUrls] = useState([]);
-  const images = data?.images || [];
 
   useEffect(() => {
+    const images = data?.images || [];
     const urls = images.map(img => {
       if (typeof img === 'string') return img;
       if (img?.url) return img.url;
@@ -22,7 +22,7 @@ const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
         if (url.startsWith('blob:')) URL.revokeObjectURL(url);
       });
     };
-  }, [images]);
+  }, [data]);
 
   if (!isOpen || !data) return null;
 

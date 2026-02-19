@@ -29,6 +29,7 @@ import ViewAnnouncementDetails from "./ViewAnnouncementDetails";
 import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
 import { createAnnouncement, getAnnouncementsList } from "@/services/announcementServices";
+import { uploadFile } from "@/services/uploadServices";
 
 const dummyData = [
   {
@@ -272,20 +273,33 @@ const AnnounementTable = () => {
       const payload = {
         title: newCommunityData.title,
         description: newCommunityData.description,
-        type: "text",
-        svgType: newCommunityData.svgType,
-        communityId
+        communityId,
+        type: "text"
       };
+
+      if (newCommunityData.images?.length > 0) {
+        const file = newCommunityData.images[0];
+        
+        if (file.type.startsWith("video/")) {
+          payload.type = "video";
+          payload.video = file;
+        } else if (file.type.startsWith("image/")) {
+          payload.type = "image";
+          payload.image = file;
+        }
+      }
 
       const result = await createAnnouncement(payload);
       
       if (result.status) {
         setShowCreateModal(false);
-        await new Promise(resolve => setTimeout(resolve, 500));
         await fetchAnnouncements();
+      } else {
+        alert('Failed to create announcement: ' + (result.message || 'Unknown error'));
       }
     } catch (error) {
       console.error("Failed to create announcement:", error);
+      alert('Error: ' + error.message);
     } finally {
       setIsProcessing(false);
     }

@@ -3,9 +3,14 @@ const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ["js", "jsx"],
   images: {},
-  // compiler: {
-  //   removeConsole: true
-  // }
+  async rewrites() {
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: 'https://lovethepadel.duckdns.org/v1/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

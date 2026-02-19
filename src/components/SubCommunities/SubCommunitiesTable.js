@@ -20,7 +20,8 @@ import CreateSubCommunityModal from "./CreateSubCommunityModal";
 import ViewSubCommunityModal from "./ViewSubCommunityModal";
 import EditSubCommunityModal from "./EditSubCommunityModal";
 import StatusChip from "../ui/StatusChip";
-import { createSubCommunity, getSubCommunitiesList } from "@/services/subCommunityServices";
+import { uploadFile } from "@/services/uploadServices";
+import { createSubCommunity, getSubCommunitiesList, deleteSubCommunity } from "@/services/subCommunityServices";
 
 const dummyData = [
   {
@@ -248,9 +249,6 @@ const SubCommunitiesTable = () => {
         return;
       }
 
-      console.log('newCommunityData received:', newCommunityData);
-      console.log('Location value:', newCommunityData.location);
-
       const payload = {
         name: newCommunityData.title,
         description: newCommunityData.description,
@@ -259,32 +257,41 @@ const SubCommunitiesTable = () => {
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
 
-      // Only add location if it exists
-      if (newCommunityData.location) {
-        payload.location = {
-          streetAddress: newCommunityData.location,
-          country: "India",
-          city: "New Delhi",
-          state: "Delhi",
-          postalCode: "110016",
-          position: {
-            type: "Point",
-            coordinates: [77.2065, 28.5494]
+      // Upload profilePic and set as bannerPic (array)
+      if (newCommunityData.profilePic) {
+        try {
+          const uploadResult = await uploadFile(newCommunityData.profilePic);
+          if (uploadResult.status && uploadResult.data?.url) {
+            payload.bannerPic = [uploadResult.data.url];
           }
-        };
+        } catch (error) {
+          console.error('Profile pic upload failed:', error);
+          // Continue without profile pic
+        }
       }
 
-      console.log('Creating sub-community with payload:', payload);
+      // Add socialLinks if provided
+      if (newCommunityData.socialLinks && newCommunityData.socialLinks.length > 0) {
+        payload.socialLinks = newCommunityData.socialLinks;
+      }
+
+      // Add location if it exists
+      if (newCommunityData.location) {
+        payload.location = newCommunityData.location;
+      }
+
       const response = await createSubCommunity(payload);
-      console.log('Response received:', response);
       
       if (response.status) {
+        alert('Sub-community created successfully!');
         setShowCreateModal(false);
-        await new Promise(resolve => setTimeout(resolve, 500));
         await fetchSubCommunities();
+      } else {
+        alert(`Failed to create sub-community: ${response.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error("Failed to create community:", error);
+      alert(`Error: ${error.message || 'Failed to create sub-community'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -360,21 +367,8 @@ const SubCommunitiesTable = () => {
     if (!selectedDelete) return;
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Filter from original data and re-paginate
-      const newFiltered = filteredData.filter(
-        (item) => item._id !== selectedDelete
-      );
-      setFilteredData(newFiltered);
-
-      // Update pagination if needed
-      const newTotalPages = Math.ceil(newFiltered.length / pagination.limit);
-      if (pagination.page > newTotalPages && newTotalPages > 0) {
-        setPagination((prev) => ({ ...prev, page: newTotalPages }));
-      }
-
+      await deleteSubCommunity(selectedDelete);
+      await fetchSubCommunities();
       closeDeleteModal();
     } catch (error) {
       console.error("Failed to delete sub-community:", error);
