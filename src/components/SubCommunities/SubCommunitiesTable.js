@@ -257,16 +257,29 @@ const SubCommunitiesTable = () => {
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
 
-      // Upload profilePic and set as bannerPic (array)
+      // Upload profilePic
       if (newCommunityData.profilePic) {
         try {
           const uploadResult = await uploadFile(newCommunityData.profilePic);
           if (uploadResult.status && uploadResult.data?.url) {
-            payload.bannerPic = [uploadResult.data.url];
+            payload.profilePic = uploadResult.data.url;
           }
         } catch (error) {
           console.error('Profile pic upload failed:', error);
-          // Continue without profile pic
+        }
+      }
+
+      // Upload banner images
+      if (newCommunityData.images?.length > 0) {
+        try {
+          const uploadPromises = newCommunityData.images.map(img => uploadFile(img));
+          const results = await Promise.all(uploadPromises);
+          const urls = results.filter(r => r.status && r.data?.url).map(r => r.data.url);
+          if (urls.length > 0) {
+            payload.bannerPic = urls;
+          }
+        } catch (error) {
+          console.error('Banner images upload failed:', error);
         }
       }
 
@@ -276,14 +289,18 @@ const SubCommunitiesTable = () => {
       }
 
       // Add location if it exists
-      if (newCommunityData.location) {
-        payload.location = newCommunityData.location;
+      if (newCommunityData.location && newCommunityData.locationCoords) {
+        payload.location = {
+          position: {
+            type: "Point",
+            coordinates: [newCommunityData.locationCoords.lng, newCommunityData.locationCoords.lat]
+          }
+        };
       }
 
       const response = await createSubCommunity(payload);
       
       if (response.status) {
-        alert('Sub-community created successfully!');
         setShowCreateModal(false);
         await fetchSubCommunities();
       } else {

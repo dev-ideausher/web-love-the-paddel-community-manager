@@ -16,6 +16,7 @@ const CreateSubCommunityModal = ({
     description: "",
     status: "active",
     location: "",
+    locationCoords: null,
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -72,6 +73,7 @@ const CreateSubCommunityModal = ({
             const lng = place.geometry.location.lng();
             setSelectedPosition({ lat, lng });
             setMapCenter({ lat, lng });
+            setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
             const address = place.formatted_address || place.name;
             setFormData(prev => ({ ...prev, location: address }));
             if (inputRef) {
@@ -104,6 +106,7 @@ const CreateSubCommunityModal = ({
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     setSelectedPosition({ lat, lng });
+    setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
 
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
@@ -122,6 +125,7 @@ const CreateSubCommunityModal = ({
           const lng = position.coords.longitude;
           setSelectedPosition({ lat, lng });
           setMapCenter({ lat, lng });
+          setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
           
           // Reverse geocode to get address
           if (isLoaded && window.google?.maps) {
