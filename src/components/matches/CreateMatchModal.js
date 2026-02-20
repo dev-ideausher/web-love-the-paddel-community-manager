@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
 const EMPTY_FORM = {
   name: "",
@@ -33,6 +33,7 @@ const CreateMatchModal = ({
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
   const [selectedPosition, setSelectedPosition] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
   const [locationDetails, setLocationDetails] = useState({
     formattedAddress: "",
     city: "",
@@ -118,6 +119,49 @@ const CreateMatchModal = ({
         handleMapClick({ latLng: { lat: () => lat, lng: () => lng } });
       });
     }
+  };
+
+  const onPlaceChanged = () => {
+    if (!autocomplete) return;
+
+    const place = autocomplete.getPlace();
+    if (!place.geometry) return;
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    
+    setSelectedPosition({ lat, lng });
+    setMapCenter({ lat, lng });
+
+    let city = "";
+    let state = "";
+    let postalCode = "";
+    let country = "";
+    
+    place.address_components?.forEach(component => {
+      if (component.types.includes("locality")) {
+        city = component.long_name;
+      }
+      if (component.types.includes("administrative_area_level_1")) {
+        state = component.long_name;
+      }
+      if (component.types.includes("postal_code")) {
+        postalCode = component.long_name;
+      }
+      if (component.types.includes("country")) {
+        country = component.long_name;
+      }
+    });
+    
+    setLocationDetails({
+      formattedAddress: place.formatted_address,
+      city,
+      state,
+      postalCode,
+      country
+    });
+    
+    handleChange("location", place.formatted_address);
   };
 
   const handleChange = useCallback((key, value) => {
@@ -383,14 +427,33 @@ const handleSubmit = (e) => {
 
           <Field label="Match Location" error={errors.location}>
             <div className="relative">
-              <input
-                value={formData.location}
-                onChange={(e) => handleChange("location", e.target.value)}
+              {isLoaded ? (
+                <Autocomplete
+                  onLoad={(auto) => setAutocomplete(auto)}
+                  onPlaceChanged={onPlaceChanged}
+                >
+                  <input
+                    value={formData.location}
+                    onChange={(e) => handleChange("location", e.target.value)}
+                    className={`${inputStyle} ${errors.location ? 'border-red-300' : ''}`}
+                    placeholder="Search or enter location"
+                  />
+                </Autocomplete>
+              ) : (
+                <input
+                  value={formData.location}
+                  onChange={(e) => handleChange("location", e.target.value)}
+                  className={`${inputStyle} ${errors.location ? 'border-red-300' : ''}`}
+                  placeholder="Enter location"
+                />
+              )}
+              <button
+                type="button"
                 onClick={() => setShowMap(!showMap)}
-                className={`${inputStyle} min-h-[60px] bg-gray-50 text-gray-600 cursor-pointer ${errors.location ? 'border-red-300' : ''}`}
-                placeholder="Click to select location on map"
-                readOnly
-              />
+                className="mt-2 text-sm text-blue-600 hover:underline"
+              >
+                📍 {showMap ? 'Hide map' : 'Pick from map'}
+              </button>
             </div>
           </Field>
 

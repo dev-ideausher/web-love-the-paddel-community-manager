@@ -30,6 +30,7 @@ import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
 import { createAnnouncement, getAnnouncementsList } from "@/services/announcementServices";
 import { uploadFile } from "@/services/uploadServices";
+import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const dummyData = [
   {
@@ -213,7 +214,6 @@ const AnnounementTable = () => {
     limit: 10,
     totalPages: 1,
   });
-  const [communityId] = useState("69523e5ce4e6606aa7ac3d5b");
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -236,13 +236,8 @@ const AnnounementTable = () => {
           : Array.isArray(response.data) 
           ? response.data 
           : [];
-        const filtered = dataArray.filter(item => {
-          const itemCommunityId = typeof item.communityId === 'object' && item.communityId?._id 
-            ? item.communityId._id 
-            : item.communityId;
-          return itemCommunityId === communityId || item.communityId?.name === 'Love the padel community';
-        });
-        const formattedData = filtered.map(item => ({
+        
+        const formattedData = dataArray.map(item => ({
           _id: item._id,
           title: item.title,
           subtitle: item.subtitle || "",
@@ -261,7 +256,7 @@ const AnnounementTable = () => {
     } finally {
       setLoading(false);
     }
-  }, [communityId]);
+  }, []);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -273,7 +268,7 @@ const AnnounementTable = () => {
       const payload = {
         title: newCommunityData.title,
         description: newCommunityData.description,
-        communityId,
+        communityId: newCommunityData.subCommunity,
         type: "text",
         svgType: newCommunityData.svgType || "GENERAL"
       };
