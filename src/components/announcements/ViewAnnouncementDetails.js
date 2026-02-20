@@ -60,7 +60,7 @@ const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
 
         <div className="p-6 space-y-4">
           <div className="flex flex-col">
-            <span>Sub Community</span>
+            <span>Announcement Name</span>
             <span className="text-2xl font-semibold rs-text-capitalize pb-[17px]">
               {data?.title || "N/A"}
             </span>

@@ -46,8 +46,8 @@ const MatchTable = () => {
 
   const fetchSubCommunities = async () => {
     const res = await getSubCommunitiesList();
-    setSubcommunities(res?.data || []);
-
+    const communities = res?.data?.results || res?.data || [];
+    setSubcommunities(Array.isArray(communities) ? communities : []);
   };
   const fetchData = async (page = 1, limit = 10, search = "") => {
     setLoading(true);

@@ -19,10 +19,10 @@ const EMPTY_FORM = {
   location: "",
 };
 
-const SKILLS = ["A", "B+", "B", "B-", "C-", "C+", "D", "D+"];
+const SKILLS = ["E", "D", "D+", "C-", "C+", "B-", "B", "B+", "A"];
 
 const CreateMatchModal = ({
-  subCommunities,
+  subCommunities = [],
   isOpen,
   onClose,
   onSave,
@@ -183,20 +183,10 @@ const handleSubmit = (e) => {
   const lng = selectedPosition?.lng || 0;
   const lat = selectedPosition?.lat || 0;
 
-  // Map subcommunity values to their community IDs
-  const subCommunityToCommunityMap = {
-    "master": "69523e5ce4e6606aa7ac3d5a",
-    "downtown": "69523e5ce4e6606aa7ac3d5b",
-    "eastside": "69523e5ce4e6606aa7ac3d5bc",
-    "westvalley": "69523e5ce4e6606aa7ac3d5d"
-  };
-
-  const communityId = subCommunityToCommunityMap[formData.subCommunity] || "69523e5ce4e6606aa7ac3d5b";
-
   const apiPayload = {
     name: formData.name,
     description: formData.name,
-    community: communityId,
+    community: formData.subCommunity,
     location: {
       streetAddress: locationDetails.formattedAddress || formData.location || "Default Location",
       country: locationDetails.country || "Delhi",
@@ -212,6 +202,8 @@ const handleSubmit = (e) => {
     startTime: new Date(`${dateStr}T${formData.startTime}:00`).toISOString(),
     endTime: new Date(`${dateStr}T${formData.endTime}:00`).toISOString(),
     matchMode: formData.matchMode,
+    currentVerificationStatus: formData.matchType,
+    skills: formData.skillRange,
     duration: durationMap[formData.duration],
     playersRequired: Number(formData.maxPlayers),
     price: Number(formData.price),
@@ -254,10 +246,11 @@ const handleSubmit = (e) => {
               className={`${inputStyle} ${errors.subCommunity ? 'border-red-300' : ''}`}
             >
               <option value="">Select</option>
-              <option value="master">Master community</option>
-              <option value="downtown">Downtown padel club</option>
-              <option value="eastside">East side courts</option>
-              <option value="westvalley">West valley arena</option>
+              {Array.isArray(subCommunities) && subCommunities.map((community) => (
+                <option key={community._id} value={community._id}>
+                  {community.name}
+                </option>
+              ))}
             </select>
           </Field>
 
@@ -283,10 +276,10 @@ const handleSubmit = (e) => {
               className={`${inputStyle} ${errors.matchType ? 'border-red-300' : ''}`}
             >
               <option value="">Select</option>
-              <option>Verified</option>
-              <option>Unverified</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
             </select>
-            {formData.matchType === "Verified" && (
+            {formData.matchType === "verified" && (
               <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   ⚠️ This match requires verification. User will be redirected to complete the verification process.

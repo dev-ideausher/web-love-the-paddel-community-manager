@@ -2,13 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { X, Upload, ImageIcon, Trash2 } from "lucide-react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-const subCommunities = [
-  "General",
-  "Events",
-  "Support",
-  "Announcements",
-  "Media",
-];
+import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const announcementTypes = [
   { value: "GENERAL", label: "General" },
@@ -32,6 +26,8 @@ const CreateAnnouncementModal = ({
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [errors, setErrors] = useState({});
+  const [subCommunities, setSubCommunities] = useState([]);
+  const [loadingSubCommunities, setLoadingSubCommunities] = useState(false);
 
   // Handle form input changes
   const handleInputChange = useCallback(
@@ -162,6 +158,32 @@ const CreateAnnouncementModal = ({
     [formData, images, onSave, validateForm]
   );
 
+  // Fetch sub-communities
+  useEffect(() => {
+    const fetchSubCommunities = async () => {
+      setLoadingSubCommunities(true);
+      try {
+        const response = await getSubCommunitiesList({ limit: 100 });
+        if (response.status && response.data) {
+          const dataArray = Array.isArray(response.data.results) 
+            ? response.data.results 
+            : Array.isArray(response.data) 
+            ? response.data 
+            : [];
+          setSubCommunities(dataArray);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sub-communities:", error);
+      } finally {
+        setLoadingSubCommunities(false);
+      }
+    };
+    
+    if (isOpen) {
+      fetchSubCommunities();
+    }
+  }, [isOpen]);
+
   // Cleanup image previews on unmount
   useEffect(() => {
     return () => {
@@ -258,15 +280,15 @@ const CreateAnnouncementModal = ({
                 className={`w-full px-4 py-3 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.subCommunity ? "border-red-300" : "border-gray-200"
                 }`}
-                disabled={isLoading}
+                disabled={isLoading || loadingSubCommunities}
               >
                 <option value="" disabled>
-                  Select a sub community
+                  {loadingSubCommunities ? "Loading..." : "Select a sub community"}
                 </option>
 
-                {subCommunities.map((option, idx) => (
-                  <option key={idx} value={option}>
-                    {option}
+                {subCommunities.map((option) => (
+                  <option key={option._id} value={option._id}>
+                    {option.name}
                   </option>
                 ))}
               </select>
