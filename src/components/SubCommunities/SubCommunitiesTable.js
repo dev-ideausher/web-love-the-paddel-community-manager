@@ -21,7 +21,7 @@ import ViewSubCommunityModal from "./ViewSubCommunityModal";
 import EditSubCommunityModal from "./EditSubCommunityModal";
 import StatusChip from "../ui/StatusChip";
 import { uploadFile } from "@/services/uploadServices";
-import { createSubCommunity, getSubCommunitiesList, deleteSubCommunity } from "@/services/subCommunityServices";
+import { createSubCommunity, getSubCommunitiesList, deleteSubCommunity, updateSubCommunity } from "@/services/subCommunityServices";
 
 const dummyData = [
   {
@@ -188,7 +188,7 @@ const SubCommunitiesTable = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showInactiveModal, setShowInactiveModal] = useState(false);
+  const [showToggleStatusModal, setShowToggleStatusModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedDelete, setSelectedDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -206,6 +206,7 @@ const SubCommunitiesTable = () => {
         const filtered = dataArray.filter(item => item.parentCommunity === parentCommunityId);
         const formattedData = filtered.map(item => {
           console.log('Item location:', item.location);
+          console.log('Item isActive:', item.isActive, 'Item status:', item.status);
           let locationStr = "";
           if (item.location) {
             if (typeof item.location === 'string') {
@@ -217,13 +218,20 @@ const SubCommunitiesTable = () => {
               locationStr = `${lat}, ${lng}`;
             }
           }
+          // Determine status from isActive field or status field
+          let status = "active";
+          if (item.hasOwnProperty('isActive')) {
+            status = item.isActive ? "active" : "inactive";
+          } else if (item.status) {
+            status = item.status;
+          }
           return {
             _id: item._id,
             title: item.name,
             description: item.description,
             dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
             members: item.members?.length || 0,
-            status: item.status || "active",
+            status: status,
             images: item.images || [],
             location: locationStr,
             locationData: item.location,
@@ -260,6 +268,8 @@ const SubCommunitiesTable = () => {
         isSubCommunity: true,
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
       };
+
+      console.log('Creating with payload:', payload);
 
       // Upload profilePic
       if (newCommunityData.profilePic) {
@@ -306,6 +316,12 @@ const SubCommunitiesTable = () => {
       const response = await createSubCommunity(payload);
       
       if (response.status) {
+        // If status is inactive, update it after creation
+        if (newCommunityData.status === "inactive" && response.data?._id) {
+          console.log('Attempting to set inactive status for:', response.data._id);
+          const updateResponse = await updateSubCommunity(response.data._id, { isActive: false });
+          console.log('Update response:', updateResponse);
+        }
         setShowCreateModal(false);
         await fetchSubCommunities();
       } else {
@@ -380,9 +396,9 @@ const SubCommunitiesTable = () => {
     setShowEditModal(true);
   };
 
-  const openInactiveModal = (item) => {
+  const openToggleStatusModal = (item) => {
     setSelectedItem(item);
-    setShowInactiveModal(true);
+    setShowToggleStatusModal(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -399,19 +415,22 @@ const SubCommunitiesTable = () => {
     }
   };
 
-  const handleInactiveConfirm = async () => {
+  const handleToggleStatusConfirm = async () => {
     setIsProcessing(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const updatedData = filteredData.map((item) =>
-        item._id === selectedItem._id ? { ...item, status: "inactive" } : item
-      );
-      setFilteredData(updatedData);
-      setOriginalData(updatedData);
-      setShowInactiveModal(false);
+      const newStatus = selectedItem.status === "active" ? "inactive" : "active";
+      const isActive = newStatus === "active";
+      console.log('Toggling status for:', selectedItem._id);
+      console.log('Current status:', selectedItem.status);
+      console.log('New status:', newStatus);
+      console.log('Setting isActive to:', isActive);
+      const updateResponse = await updateSubCommunity(selectedItem._id, { isActive });
+      console.log('Toggle response:', updateResponse);
+      await fetchSubCommunities();
+      setShowToggleStatusModal(false);
     } catch (error) {
-      console.error("Failed to inactive sub-community:", error);
+      console.error("Failed to toggle sub-community status:", error);
+      alert('Failed to update status. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -495,14 +514,14 @@ const SubCommunitiesTable = () => {
         ]}
       />
 
-      {/* Inactive Confirmation Modal */}
+      {/* Toggle Status Confirmation Modal */}
       <ConfirmationModal
-        isOpen={showInactiveModal}
-        onClose={() => setShowInactiveModal(false)}
-        onConfirm={handleInactiveConfirm}
-        title="Inactive Sub Community?"
-        message={`Are you sure you want to make "${selectedItem?.title}" inactive?`}
-        confirmText="Yes, make inactive"
+        isOpen={showToggleStatusModal}
+        onClose={() => setShowToggleStatusModal(false)}
+        onConfirm={handleToggleStatusConfirm}
+        title={`${selectedItem?.status === "active" ? "Deactivate" : "Activate"} Sub Community?`}
+        message={`Are you sure you want to ${selectedItem?.status === "active" ? "deactivate" : "activate"} "${selectedItem?.title}"?`}
+        confirmText={`Yes, ${selectedItem?.status === "active" ? "deactivate" : "activate"}`}
         cancelText="Cancel"
         isProcessing={isProcessing}
       />
@@ -625,10 +644,10 @@ const SubCommunitiesTable = () => {
                         Edit
                       </span>
                       <span
-                        onClick={() => openInactiveModal(item)}
+                        onClick={() => openToggleStatusModal(item)}
                         className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
                       >
-                        Inactive
+                        {item.status === "active" ? "Inactive" : "Active"}
                       </span>
                       <span
                         onClick={() => openDeleteModal(item._id)}

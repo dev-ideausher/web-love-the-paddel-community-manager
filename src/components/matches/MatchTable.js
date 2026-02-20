@@ -56,7 +56,11 @@ const MatchTable = () => {
       if (search) params.search = search;
       
       const res = await getMatchesList(params);
-      console.log("Triggered", res);
+      console.log("Fetch matches response:", res);
+      console.log("Matches data:", res.data.results);
+      res.data.results.forEach((match, index) => {
+        console.log(`Match ${index + 1} status:`, match.status);
+      });
 
       setAllData(res.data.results);
       setFilteredData(res.data.results);
@@ -181,20 +185,14 @@ const MatchTable = () => {
   const handleInactiveConfirm = async (id) => {
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await cancelMatch(id);
-
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id
-            ? { ...item, status: "cancelled" }
-            : item,
-        ),
-      );
-
+      console.log('Canceling match with ID:', id);
+      const response = await cancelMatch(id);
+      console.log('Cancel response:', response);
+      await fetchData(pagination.page, pagination.limit, searchTerm);
       setShowInactiveModal(false);
     } catch (error) {
-      console.error("Failed to inactive match:", error);
+      console.error("Failed to cancel match:", error);
+      alert('Failed to cancel match. Please try again.');
     } finally {
       setIsProcessing(false);
     }

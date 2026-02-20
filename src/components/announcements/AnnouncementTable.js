@@ -274,7 +274,8 @@ const AnnounementTable = () => {
         title: newCommunityData.title,
         description: newCommunityData.description,
         communityId,
-        type: "text"
+        type: "text",
+        svgType: newCommunityData.svgType || "GENERAL"
       };
 
       if (newCommunityData.images?.length > 0) {

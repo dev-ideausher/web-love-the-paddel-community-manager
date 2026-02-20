@@ -66,6 +66,9 @@ export const createAnnouncement = async (payload) => {
   formData.append("description", payload.description);
   formData.append("communityId", payload.communityId);
   formData.append("type", payload.type);
+  if (payload.svgType) {
+    formData.append("svgType", payload.svgType);
+  }
   
   if (payload.image) {
     const compressed = await compressImage(payload.image);

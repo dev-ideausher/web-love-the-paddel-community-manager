@@ -101,10 +101,13 @@ export const responseValidator = async (response, isToaster = false, message = n
     }
     else if (response.status >= 500) {
         const res = await response.json()
-        toast.error(res, {
-            toastId: `API-500-error${Math.random()}`
-        })
-        return { status: false, code: response.status, message: "Encounter Server Side Error." }
+        const errorMessage = res.message || "Encounter Server Side Error.";
+        if (!isToaster) {
+            toast.error(errorMessage, {
+                toastId: `API-500-error${Math.random()}`
+            })
+        }
+        return { status: false, code: response.status, message: errorMessage }
     }
     else {
         toast.error("Something went wrong", {

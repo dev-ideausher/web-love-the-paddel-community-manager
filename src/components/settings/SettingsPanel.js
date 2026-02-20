@@ -35,13 +35,18 @@ const SettingsPanel = () => {
     setIsLoading(true);
     try {
       const response = await sendPasswordResetLink(email);
+      console.log('Reset link response:', response);
       if (response.status) {
         toast.success("Password reset link sent to your email");
       } else {
-        toast.error(response.message || "Failed to send reset link");
+        // Show the actual error message from API
+        const errorMsg = response.message || "Failed to send reset link";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      toast.error("Failed to send reset link");
+      console.error('Reset link error:', error);
+      const errorMessage = error?.message || "Failed to send reset link";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -247,6 +247,35 @@ const CreateSubCommunityModal = ({
     [formData, images, profilePic, socialLinks, onSave, validateForm, parentCommunityId]
   );
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        title: "",
+        description: "",
+        status: "active",
+        location: "",
+        locationCoords: null,
+      });
+      setImages([]);
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      setImagePreviews([]);
+      setProfilePic(null);
+      if (profilePicPreview) URL.revokeObjectURL(profilePicPreview);
+      setProfilePicPreview(null);
+      setSocialLinks([
+        { platform: "instagram", url: "" },
+        { platform: "facebook", url: "" },
+        { platform: "x", url: "" },
+        { platform: "linkedin", url: "" },
+      ]);
+      setErrors({});
+      setSelectedPosition(null);
+      setMapCenter({ lat: 28.6139, lng: 77.2090 });
+      if (inputRef) inputRef.value = "";
+    }
+  }, [isOpen]);
+
   // Cleanup image previews on unmount
   useEffect(() => {
     return () => {

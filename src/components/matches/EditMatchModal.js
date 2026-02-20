@@ -172,7 +172,7 @@ const EditMatchModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="sticky top-0 px-6 py-4 bg-white border-b rounded-t-lg">
           <div className="flex items-center justify-between">
@@ -186,7 +186,7 @@ const EditMatchModal = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4 overflow-y-auto flex-1">
           <Field label="Match Name">
             <input
               value={formData.matchName}
@@ -289,30 +289,28 @@ const EditMatchModal = ({
             </div>
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Date">
-              {console.log("date", formData.date)}
-              <input
-                type="date"
-                value={formData.date.split("T")[0]}
-                onChange={(e) => {
-                  handleChange("date", e.target.value);
-                }}
-                className={inputStyle}
-              />
-            </Field>
+          <Field label="Date">
+            {console.log("date", formData.date)}
+            <input
+              type="date"
+              value={formData.date.split("T")[0]}
+              onChange={(e) => {
+                handleChange("date", e.target.value);
+              }}
+              className={inputStyle}
+            />
+          </Field>
 
-            <Field label="Time">
-              <input
-                type="time"
-                value={formData.startTime.slice(11, 16)}
-                onChange={(e) => {
-                  handleChange("time", e.target.value);
-                }}
-                className={inputStyle}
-              />
-            </Field>
-          </div>
+          <Field label="Time">
+            <input
+              type="time"
+              value={formData.startTime.slice(11, 16)}
+              onChange={(e) => {
+                handleChange("time", e.target.value);
+              }}
+              className={inputStyle}
+            />
+          </Field>
 
           <Field label="Max Players">
             <input
@@ -325,14 +323,17 @@ const EditMatchModal = ({
           </Field>
 
           <Field label="Price">
-            <input
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => handleChange("price", e.target.value)}
-              className={inputStyle}
-              placeholder="0.00"
-            />
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleChange("price", e.target.value)}
+                className={`${inputStyle} pl-8`}
+                placeholder="0.00"
+              />
+            </div>
           </Field>
 
           <Field label="Match Location">
@@ -365,11 +366,11 @@ const EditMatchModal = ({
               </button>
 
               {showMap && isLoaded && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-10 p-2">
+                <div className="bg-white border rounded-lg shadow-lg p-2 mt-2">
                   <button
                     type="button"
                     onClick={getCurrentLocation}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2"
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2 text-sm text-blue-600"
                   >
                     📍 Use my current location
                   </button>
@@ -384,6 +385,13 @@ const EditMatchModal = ({
                       {selectedPosition && <Marker position={selectedPosition} />}
                     </GoogleMap>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(false)}
+                    className="w-full mt-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                  >
+                    Close Map
+                  </button>
                 </div>
               )}
             </div>
