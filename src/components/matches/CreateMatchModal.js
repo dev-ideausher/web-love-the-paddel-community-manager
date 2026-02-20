@@ -369,13 +369,13 @@ const handleSubmit = (e) => {
 
           <Field label="Price" error={errors.price}>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">AED</span>
               <input
                 type="number"
                 step="0.01"
                 value={formData.price}
                 onChange={(e) => handleChange("price", e.target.value)}
-                className={`${inputStyle} pl-8 ${errors.price ? 'border-red-300' : ''}`}
+                className={`${inputStyle} pl-14 ${errors.price ? 'border-red-300' : ''}`}
                 placeholder="0.00"
               />
             </div>
