@@ -19,11 +19,14 @@ export default function ResetPassword() {
     });
 
     useEffect(() => {
+        if (!router.isReady) return;
         const code = router.query.oobCode;
         if (code) {
             verifyResetCode(code);
+        } else {
+            setVerifying(false);
         }
-    }, [router.query]);
+    }, [router.isReady, router.query]);
 
     const verifyResetCode = async (code) => {
         try {
@@ -32,12 +35,17 @@ export default function ResetPassword() {
             setVerifying(false);
         } catch (error) {
             toast.error("Invalid or expired reset link");
-            router.push("/");
+            setVerifying(false);
         }
     };
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
+        
+        if (!oobCode) {
+            toast.error("No reset code provided. Please use the link from your email.");
+            return;
+        }
         
         if (fields.password !== fields.confirmPassword) {
             toast.error("Passwords do not match");
