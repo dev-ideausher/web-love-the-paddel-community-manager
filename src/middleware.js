@@ -10,6 +10,7 @@ export function middleware(req) {
   const publicRoutes = [
     "/",
     "/forgot-password",
+    "/reset-password",
     "/email-sent",
     "/email-verification",
   ];
