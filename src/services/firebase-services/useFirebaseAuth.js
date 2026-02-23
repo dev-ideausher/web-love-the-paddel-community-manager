@@ -61,11 +61,7 @@ export default function useFirebaseAuth() {
   };
   const forgotPassword = async (email) => {
     try {
-      const actionCodeSettings = {
-        url: typeof window !== 'undefined' ? `${window.location.origin}/__/auth/action` : 'https://web-love-the-paddle-community-manager.vercel.app/__/auth/action',
-        handleCodeInApp: false,
-      };
-      const res = await sendPasswordResetEmail(auth, email, actionCodeSettings);
+      const res = await sendPasswordResetEmail(auth, email);
 
       toast.success("Reset password email has been sent successfully", {
         toastId: "firebase-reset-password-sent-message",
