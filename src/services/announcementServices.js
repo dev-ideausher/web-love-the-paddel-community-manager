@@ -92,3 +92,23 @@ export const createAnnouncement = async (payload) => {
     return apiError(error);
   }
 };
+
+export const deleteAnnouncement = async (id) => {
+  const endpoint = `${URL}/announcements/${id}`;
+  const token = await getAuthToken();
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${token}`);
+
+  const requestOptions = {
+    method: "DELETE",
+    headers: myHeaders,
+    redirect: "follow",
+  };
+
+  try {
+    const response = await fetch(endpoint, requestOptions);
+    return responseValidator(response, true);
+  } catch (error) {
+    return apiError(error);
+  }
+};

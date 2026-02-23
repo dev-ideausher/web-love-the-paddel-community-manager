@@ -28,7 +28,7 @@ import StatusChip from "../ui/StatusChip";
 import ViewAnnouncementDetails from "./ViewAnnouncementDetails";
 import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
-import { createAnnouncement, getAnnouncementsList } from "@/services/announcementServices";
+import { createAnnouncement, getAnnouncementsList, deleteAnnouncement } from "@/services/announcementServices";
 import { uploadFile } from "@/services/uploadServices";
 import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
@@ -371,24 +371,12 @@ const AnnounementTable = () => {
     if (!selectedDelete) return;
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Filter from original data and re-paginate
-      const newFiltered = filteredData.filter(
-        (item) => item._id !== selectedDelete
-      );
-      setFilteredData(newFiltered);
-
-      // Update pagination if needed
-      const newTotalPages = Math.ceil(newFiltered.length / pagination.limit);
-      if (pagination.page > newTotalPages && newTotalPages > 0) {
-        setPagination((prev) => ({ ...prev, page: newTotalPages }));
-      }
-
+      await deleteAnnouncement(selectedDelete);
+      await fetchAnnouncements();
       closeDeleteModal();
     } catch (error) {
-      console.error("Failed to delete sub-community:", error);
+      console.error("Failed to delete announcement:", error);
+      alert('Failed to delete announcement. Please try again.');
     } finally {
       setIsProcessing(false);
     }
