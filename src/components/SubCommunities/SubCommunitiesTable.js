@@ -205,8 +205,6 @@ const SubCommunitiesTable = () => {
         console.log('Data array:', dataArray);
         const filtered = dataArray.filter(item => item.parentCommunity === parentCommunityId);
         const formattedData = filtered.map(item => {
-          console.log('Item location:', item.location);
-          console.log('Item isActive:', item.isActive, 'Item status:', item.status);
           let locationStr = "";
           if (item.location) {
             if (typeof item.location === 'string') {
@@ -218,12 +216,12 @@ const SubCommunitiesTable = () => {
               locationStr = `${lat}, ${lng}`;
             }
           }
-          // Determine status from isActive field or status field
+          // Use status field directly if it exists, otherwise fall back to isActive
           let status = "active";
-          if (item.hasOwnProperty('isActive')) {
-            status = item.isActive ? "active" : "inactive";
-          } else if (item.status) {
+          if (item.status) {
             status = item.status;
+          } else if (item.hasOwnProperty('isActive')) {
+            status = item.isActive ? "active" : "inactive";
           }
           return {
             _id: item._id,
@@ -419,13 +417,12 @@ const SubCommunitiesTable = () => {
     setIsProcessing(true);
     try {
       const newStatus = selectedItem.status === "active" ? "inactive" : "active";
-      const isActive = newStatus === "active";
-      console.log('Toggling status for:', selectedItem._id);
-      console.log('Current status:', selectedItem.status);
-      console.log('New status:', newStatus);
-      console.log('Setting isActive to:', isActive);
-      const updateResponse = await updateSubCommunity(selectedItem._id, { isActive });
-      console.log('Toggle response:', updateResponse);
+      const payload = {
+        name: selectedItem.title,
+        tagline: selectedItem.title,
+        status: newStatus
+      };
+      const updateResponse = await updateSubCommunity(selectedItem._id, payload);
       await fetchSubCommunities();
       setShowToggleStatusModal(false);
     } catch (error) {
@@ -439,17 +436,32 @@ const SubCommunitiesTable = () => {
   const handleEditSave = async (updatedData) => {
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const payload = {
+        name: updatedData.title,
+        tagline: updatedData.title,
+        status: updatedData.status
+      };
 
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, ...updatedData } : item
-        )
-      );
-      setShowEditModal(false);
+      if (updatedData.images && updatedData.images.length > 0) {
+        const uploadPromises = updatedData.images.map(img => uploadFile(img));
+        const results = await Promise.all(uploadPromises);
+        const urls = results.filter(r => r.status && r.data?.url).map(r => r.data.url);
+        if (urls.length > 0) {
+          payload.bannerPic = urls;
+        }
+      }
+
+      const updateResponse = await updateSubCommunity(selectedItem._id, payload);
+      
+      if (updateResponse.status) {
+        await fetchSubCommunities();
+        setShowEditModal(false);
+      } else {
+        alert('Failed to update sub-community. Please try again.');
+      }
     } catch (error) {
       console.error("Failed to update sub-community:", error);
+      alert('Failed to update sub-community. Please try again.');
     } finally {
       setIsProcessing(false);
     }

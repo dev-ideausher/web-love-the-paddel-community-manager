@@ -15,11 +15,15 @@ export function middleware(req) {
     "/email-verification",
   ];
 
+  const isPublicRoute = publicRoutes.includes(pathname) || 
+                        pathname.startsWith("/reset-password/") || 
+                        pathname.startsWith("/__/auth/");
+
   try {
     const token = req.cookies.get("token");
 
     if (!token) {
-      if (publicRoutes.includes(pathname)) {
+      if (isPublicRoute) {
         return NextResponse.next();
       }
 

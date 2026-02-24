@@ -161,14 +161,14 @@ export const createSubCommunity = async (payload) => {
 };
 
 export const updateSubCommunity = async (id, payload) => {
-  const endpoint = `${URL}/communities/${id}`;
+  const endpoint = `${URL}/communities/sub-communities/${id}`;
   const token = await getAuthToken();
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
   myHeaders.append("Content-Type", "application/json");
 
   const requestOptions = {
-    method: "PATCH",
+    method: "PUT",
     headers: myHeaders,
     body: JSON.stringify(payload),
     redirect: "follow",
