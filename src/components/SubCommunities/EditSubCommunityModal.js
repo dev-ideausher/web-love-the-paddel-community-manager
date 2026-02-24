@@ -53,7 +53,12 @@ const EditSubCommunityModal = ({
           : null,
       });
       setImages([]);
-      setImagePreviews([]);
+      // Show existing images as previews
+      if (initialData.images && Array.isArray(initialData.images) && initialData.images.length > 0) {
+        setImagePreviews(initialData.images);
+      } else {
+        setImagePreviews([]);
+      }
       setProfilePic(null);
       setProfilePicPreview(null);
       setSocialLinks([
@@ -216,7 +221,10 @@ const EditSubCommunityModal = ({
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => {
       const preview = prev[index];
-      if (preview) URL.revokeObjectURL(preview);
+      // Only revoke if it's a blob URL (newly uploaded), not existing image URLs
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
       return prev.filter((_, i) => i !== index);
     });
   }, []);
@@ -259,8 +267,15 @@ const EditSubCommunityModal = ({
   // Cleanup previews on unmount
   useEffect(() => {
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-      if (profilePicPreview) URL.revokeObjectURL(profilePicPreview);
+      imagePreviews.forEach((preview) => {
+        // Only revoke blob URLs, not existing image URLs
+        if (preview && preview.startsWith('blob:')) {
+          URL.revokeObjectURL(preview);
+        }
+      });
+      if (profilePicPreview && profilePicPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePicPreview);
+      }
     };
   }, []);
 
