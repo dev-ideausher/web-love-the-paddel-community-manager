@@ -62,8 +62,8 @@ export default function useFirebaseAuth() {
   const forgotPassword = async (email) => {
     try {
       const actionCodeSettings = {
-        url: `${window.location.origin}/__/auth/action`,
-        handleCodeInApp: true,
+        url: window.location.origin,
+        handleCodeInApp: false,
       };
       
       const res = await sendPasswordResetEmail(auth, email, actionCodeSettings);
