@@ -1,13 +1,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 
-export default function AuthAction() {
+export default function ResetPasswordCatchAll() {
     const router = useRouter();
 
     useEffect(() => {
         if (router.isReady && router.query.oobCode) {
-            const oobCode = router.query.oobCode;
-            window.location.href = `/reset-password?oobCode=${oobCode}`;
+            window.location.href = `/reset-password?oobCode=${router.query.oobCode}`;
         }
     }, [router.isReady, router.query]);
 
