@@ -52,6 +52,10 @@ const EditSubCommunityModal = ({
           ? { lng: initialData.locationData.position.coordinates[0], lat: initialData.locationData.position.coordinates[1] }
           : null,
       });
+      // Update input field with location
+      if (inputRef && initialData.location) {
+        inputRef.value = initialData.location;
+      }
       setImages([]);
       // Show existing images as previews
       if (initialData.images && Array.isArray(initialData.images) && initialData.images.length > 0) {
@@ -99,7 +103,7 @@ const EditSubCommunityModal = ({
         setMapCenter({ lat: 28.6139, lng: 77.2090 });
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, inputRef]);
 
   const handleInputChange = useCallback(
     (key, value) => {
