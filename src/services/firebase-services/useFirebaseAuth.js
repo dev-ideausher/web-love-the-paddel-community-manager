@@ -61,7 +61,12 @@ export default function useFirebaseAuth() {
   };
   const forgotPassword = async (email) => {
     try {
-      const res = await sendPasswordResetEmail(auth, email);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/__/auth/action`,
+        handleCodeInApp: true,
+      };
+      
+      const res = await sendPasswordResetEmail(auth, email, actionCodeSettings);
 
       toast.success("Reset password email has been sent successfully", {
         toastId: "firebase-reset-password-sent-message",
