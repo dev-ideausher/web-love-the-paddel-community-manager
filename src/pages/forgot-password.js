@@ -11,6 +11,7 @@ import useFirebaseAuth from "@/services/firebase-services/useFirebaseAuth";
 import ButtonWithLoader from "@/components/ButtonWithLoader";
 import { toast } from "react-toastify";
 import { MoveLeft } from "lucide-react";
+import { forgotPasswordAPI } from "@/services/api/userAuth";
 
 export default function ForgotPassword() {
     const router = useRouter();
@@ -29,6 +30,7 @@ export default function ForgotPassword() {
         try {
 
             let userAuthData = await forgotPassword(email)
+            let apiResponse = await forgotPasswordAPI(email)
 
             if (userAuthData?.status) {
                 router.push("/email-sent")

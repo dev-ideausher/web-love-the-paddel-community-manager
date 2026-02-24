@@ -19,15 +19,14 @@ export const userLogin = async (token) => {
     }
 }
 
-export const resetPassword = async (token, newPassword) => {
+export const forgotPasswordAPI = async (email) => {
     const myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${token}`);
     myHeaders.append("Content-Type", "application/json");
 
     const requestOptions = {
         method: "POST",
         headers: myHeaders,
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ email }),
         redirect: "follow"
     };
     try {
