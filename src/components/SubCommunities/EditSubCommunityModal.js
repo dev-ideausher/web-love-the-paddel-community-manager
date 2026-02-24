@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 import { X, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 const EditSubCommunityModal = ({
   isOpen,
@@ -15,10 +16,29 @@ const EditSubCommunityModal = ({
     title: "",
     description: "",
     status: "active",
+    location: "",
+    locationCoords: null,
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [profilePic, setProfilePic] = useState(null);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [socialLinks, setSocialLinks] = useState([
+    { platform: "instagram", url: "" },
+    { platform: "facebook", url: "" },
+    { platform: "x", url: "" },
+    { platform: "linkedin", url: "" },
+  ]);
   const [errors, setErrors] = useState({});
+  const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
+  const [inputRef, setInputRef] = useState(null);
+  
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
+  });
 
   // Initialize form data when modal opens
   useEffect(() => {
@@ -27,10 +47,30 @@ const EditSubCommunityModal = ({
         title: initialData.title || "",
         description: initialData.description || "",
         status: initialData.status || "active",
+        location: initialData.location || "",
+        locationCoords: initialData.locationData?.position?.coordinates 
+          ? { lng: initialData.locationData.position.coordinates[0], lat: initialData.locationData.position.coordinates[1] }
+          : null,
       });
       setImages([]);
       setImagePreviews([]);
+      setProfilePic(null);
+      setProfilePicPreview(null);
+      setSocialLinks([
+        { platform: "instagram", url: "" },
+        { platform: "facebook", url: "" },
+        { platform: "x", url: "" },
+        { platform: "linkedin", url: "" },
+      ]);
       setErrors({});
+      if (initialData.locationData?.position?.coordinates) {
+        const [lng, lat] = initialData.locationData.position.coordinates;
+        setSelectedPosition({ lat, lng });
+        setMapCenter({ lat, lng });
+      } else {
+        setSelectedPosition(null);
+        setMapCenter({ lat: 28.6139, lng: 77.2090 });
+      }
     }
   }, [isOpen, initialData]);
 
@@ -43,6 +83,112 @@ const EditSubCommunityModal = ({
     },
     [errors]
   );
+
+  // Initialize autocomplete
+  useEffect(() => {
+    if (isLoaded && inputRef && !autocomplete) {
+      try {
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef, {
+          fields: ["formatted_address", "geometry", "name"],
+        });
+
+        autocompleteInstance.addListener("place_changed", () => {
+          const place = autocompleteInstance.getPlace();
+          if (place.geometry) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setSelectedPosition({ lat, lng });
+            setMapCenter({ lat, lng });
+            setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
+            const address = place.formatted_address || place.name;
+            setFormData(prev => ({ ...prev, location: address }));
+            if (inputRef) {
+              inputRef.value = address;
+            }
+          }
+        });
+
+        setAutocomplete(autocompleteInstance);
+      } catch (error) {
+        console.error('Error initializing autocomplete:', error);
+      }
+    }
+  }, [isLoaded, inputRef, autocomplete]);
+
+  // Fix autocomplete dropdown z-index
+  useEffect(() => {
+    if (isLoaded) {
+      const style = document.createElement('style');
+      style.innerHTML = '.pac-container { z-index: 10000 !important; }';
+      document.head.appendChild(style);
+      return () => document.head.removeChild(style);
+    }
+  }, [isLoaded]);
+
+  // Handle map click
+  const handleMapClick = (event) => {
+    if (!isLoaded || !window.google?.maps) return;
+
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    setSelectedPosition({ lat, lng });
+    setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.[0]) {
+        const address = results[0].formatted_address;
+        handleInputChange("location", address);
+      }
+    });
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setSelectedPosition({ lat, lng });
+          setMapCenter({ lat, lng });
+          setFormData(prev => ({ ...prev, locationCoords: { lat, lng } }));
+          
+          if (isLoaded && window.google?.maps) {
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+              if (status === "OK" && results?.[0]) {
+                const address = results[0].formatted_address;
+                handleInputChange("location", address);
+                if (inputRef) {
+                  inputRef.value = address;
+                }
+              }
+            });
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          alert('Unable to get your location.');
+        }
+      );
+    }
+  };
+
+  const handleSocialLinkChange = useCallback((platform, value) => {
+    setSocialLinks((prev) =>
+      prev.map((link) =>
+        link.platform === platform ? { ...link, url: value } : link
+      )
+    );
+  }, []);
+
+  const handleProfilePicSelect = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      setProfilePic(file);
+      setProfilePicPreview(URL.createObjectURL(file));
+    }
+  }, []);
 
   const handleImageSelect = useCallback(
     (e) => {
@@ -102,16 +248,19 @@ const EditSubCommunityModal = ({
 
       onSave({
         ...formData,
-        images: images.length > 0 ? images : null, // Send new images or null if none added
+        images: images.length > 0 ? images : null,
+        profilePic,
+        socialLinks: socialLinks.filter(link => link.url.trim() !== ""),
       });
     },
-    [formData, images, onSave, validateForm]
+    [formData, images, profilePic, socialLinks, onSave, validateForm]
   );
 
   // Cleanup previews on unmount
   useEffect(() => {
     return () => {
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      if (profilePicPreview) URL.revokeObjectURL(profilePicPreview);
     };
   }, []);
 
@@ -195,6 +344,111 @@ const EditSubCommunityModal = ({
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
+            </div>
+
+            {/* Profile Picture */}
+            <div>
+              <label className="block mb-3 text-sm font-medium text-gray-700">
+                Profile Picture
+              </label>
+              <div className="p-6 text-center transition-colors border-2 border-gray-300 border-dashed rounded-xl hover:border-gray-400">
+                <input
+                  id="profile-pic-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicSelect}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="profile-pic-upload"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium cursor-pointer transition-all text-primary hover:bg-primary/10"
+                >
+                  <Upload className="w-4 h-4" />
+                  {profilePic ? "Change profile picture" : "Upload profile picture"}
+                </label>
+              </div>
+              {profilePicPreview && (
+                <div className="mt-4">
+                  <div className="relative inline-block">
+                    <img
+                      src={profilePicPreview}
+                      alt="Profile preview"
+                      className="object-cover w-32 h-32 rounded-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfilePic(null);
+                        setProfilePicPreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full"
+                      disabled={isLoading}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <label className="block mb-3 text-sm font-medium text-gray-700">
+                Social Links
+              </label>
+              <div className="space-y-3">
+                {socialLinks.map((link) => (
+                  <div key={link.platform}>
+                    <label className="block mb-1 text-xs text-gray-600 capitalize">
+                      {link.platform === "x" ? "X (Twitter)" : link.platform}
+                    </label>
+                    <input
+                      type="url"
+                      value={link.url}
+                      onChange={(e) => handleSocialLinkChange(link.platform, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      placeholder={`https://${link.platform === "x" ? "x.com" : link.platform + ".com"}/yourprofile`}
+                      disabled={isLoading}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Location Field */}
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Location
+              </label>
+              <input
+                ref={setInputRef}
+                defaultValue={formData.location}
+                onBlur={(e) => handleInputChange("location", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary mb-2"
+                placeholder="Type location or use map below"
+              />
+              {isLoaded && (
+                <div className="bg-white border rounded-lg shadow-sm p-2">
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded mb-2 text-sm text-blue-600"
+                  >
+                    📍 Use my current location
+                  </button>
+                  <div className="h-64 w-full rounded-lg overflow-hidden">
+                    <GoogleMap
+                      center={mapCenter}
+                      zoom={14}
+                      mapContainerStyle={{ width: "100%", height: "100%" }}
+                      onClick={handleMapClick}
+                    >
+                      {selectedPosition && <Marker position={selectedPosition} />}
+                    </GoogleMap>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Images Upload */}

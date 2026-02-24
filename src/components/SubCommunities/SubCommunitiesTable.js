@@ -445,10 +445,24 @@ const SubCommunitiesTable = () => {
     try {
       const payload = {
         name: updatedData.title,
+        description: updatedData.description,
         tagline: updatedData.title,
         status: updatedData.status
       };
 
+      // Upload profile pic if provided
+      if (updatedData.profilePic) {
+        try {
+          const uploadResult = await uploadFile(updatedData.profilePic);
+          if (uploadResult.status && uploadResult.data?.url) {
+            payload.profilePic = uploadResult.data.url;
+          }
+        } catch (error) {
+          console.error('Profile pic upload failed:', error);
+        }
+      }
+
+      // Upload banner images if provided
       if (updatedData.images && updatedData.images.length > 0) {
         const uploadPromises = updatedData.images.map(img => uploadFile(img));
         const results = await Promise.all(uploadPromises);
@@ -456,6 +470,22 @@ const SubCommunitiesTable = () => {
         if (urls.length > 0) {
           payload.bannerPic = urls;
         }
+      }
+
+      // Add social links if provided
+      if (updatedData.socialLinks && updatedData.socialLinks.length > 0) {
+        payload.socialLinks = updatedData.socialLinks;
+      }
+
+      // Add location if provided
+      if (updatedData.location && updatedData.locationCoords) {
+        payload.location = {
+          position: {
+            type: "Point",
+            coordinates: [updatedData.locationCoords.lng, updatedData.locationCoords.lat]
+          },
+          streetAddress: updatedData.location
+        };
       }
 
       const updateResponse = await updateSubCommunity(selectedItem._id, payload);
