@@ -230,7 +230,9 @@ const SubCommunitiesTable = () => {
             dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
             members: item.members?.length || 0,
             status: status,
-            images: item.images || [],
+            images: item.bannerPic || item.images || [],
+            profilePic: item.profilePic || null,
+            socialLinks: item.socialLinks || [],
             location: locationStr,
             locationData: item.location,
           };

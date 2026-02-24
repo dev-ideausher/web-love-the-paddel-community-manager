@@ -60,13 +60,35 @@ const EditSubCommunityModal = ({
         setImagePreviews([]);
       }
       setProfilePic(null);
-      setProfilePicPreview(null);
-      setSocialLinks([
-        { platform: "instagram", url: "" },
-        { platform: "facebook", url: "" },
-        { platform: "x", url: "" },
-        { platform: "linkedin", url: "" },
-      ]);
+      // Show existing profile pic
+      if (initialData.profilePic) {
+        setProfilePicPreview(initialData.profilePic);
+      } else {
+        setProfilePicPreview(null);
+      }
+      // Load existing social links
+      if (initialData.socialLinks && Array.isArray(initialData.socialLinks) && initialData.socialLinks.length > 0) {
+        const loadedLinks = [
+          { platform: "instagram", url: "" },
+          { platform: "facebook", url: "" },
+          { platform: "x", url: "" },
+          { platform: "linkedin", url: "" },
+        ];
+        initialData.socialLinks.forEach(link => {
+          const index = loadedLinks.findIndex(l => l.platform === link.platform);
+          if (index !== -1) {
+            loadedLinks[index].url = link.url || "";
+          }
+        });
+        setSocialLinks(loadedLinks);
+      } else {
+        setSocialLinks([
+          { platform: "instagram", url: "" },
+          { platform: "facebook", url: "" },
+          { platform: "x", url: "" },
+          { platform: "linkedin", url: "" },
+        ]);
+      }
       setErrors({});
       if (initialData.locationData?.position?.coordinates) {
         const [lng, lat] = initialData.locationData.position.coordinates;
