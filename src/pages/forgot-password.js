@@ -5,9 +5,6 @@ import Link from "@/components/Link";
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { isRequired } from "@/Utilities/helpers";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/services/firebase-services/firebase";
-import useFirebaseAuth from "@/services/firebase-services/useFirebaseAuth";
 import ButtonWithLoader from "@/components/ButtonWithLoader";
 import { toast } from "react-toastify";
 import { MoveLeft } from "lucide-react";
@@ -21,18 +18,14 @@ export default function ForgotPassword() {
     const emailHandler = (e) => {
         setEmail(e.target.value);
     };
-    const { forgotPassword } = useFirebaseAuth()
 
     const handleForgotPassword = async (e) => {
-
         e.preventDefault();
         setLoading(true)
         try {
-
-            let userAuthData = await forgotPassword(email)
             let apiResponse = await forgotPasswordAPI(email)
 
-            if (userAuthData?.status) {
+            if (apiResponse?.status) {
                 router.push("/email-sent")
             }
         }
@@ -42,7 +35,6 @@ export default function ForgotPassword() {
         finally {
             setLoading(false)
         }
-
     };
     return (
         <div className="login-container">
