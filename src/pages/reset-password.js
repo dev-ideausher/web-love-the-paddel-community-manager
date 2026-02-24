@@ -2,48 +2,34 @@ import Button from "@/components/Button";
 import Password from "@/components/Password";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
-import { auth } from "@/services/firebase-services/firebase";
 import ButtonWithLoader from "@/components/ButtonWithLoader";
 import { toast } from "react-toastify";
 import Image from "next/image";
+import { resetPassword } from "@/services/api/userAuth";
 
 export default function ResetPassword() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [verifying, setVerifying] = useState(true);
-    const [oobCode, setOobCode] = useState("");
+    const [token, setToken] = useState("");
     const [fields, setFields] = useState({
         password: "",
         confirmPassword: "",
     });
 
     useEffect(() => {
-        if (!router.isReady) return;
-        const code = router.query.oobCode;
-        if (code) {
-            verifyResetCode(code);
-        } else {
-            setVerifying(false);
+        if (router.isReady) {
+            const resetToken = router.query.token;
+            if (resetToken) {
+                setToken(resetToken);
+            }
         }
     }, [router.isReady, router.query]);
-
-    const verifyResetCode = async (code) => {
-        try {
-            await verifyPasswordResetCode(auth, code);
-            setOobCode(code);
-            setVerifying(false);
-        } catch (error) {
-            toast.error("Invalid or expired reset link");
-            setVerifying(false);
-        }
-    };
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
         
-        if (!oobCode) {
-            toast.error("No reset code provided. Please use the link from your email.");
+        if (!token) {
+            toast.error("No reset token provided. Please use the link from your email.");
             return;
         }
         
@@ -59,23 +45,17 @@ export default function ResetPassword() {
 
         setLoading(true);
         try {
-            await confirmPasswordReset(auth, oobCode, fields.password);
-            toast.success("Password reset successfully");
-            router.push("/");
+            const result = await resetPassword(token, fields.password);
+            if (result.status) {
+                toast.success("Password reset successfully");
+                router.push("/");
+            }
         } catch (error) {
             toast.error("Failed to reset password. Please try again.");
         } finally {
             setLoading(false);
         }
     };
-
-    if (verifying) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p>Verifying reset link...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="login-container">
