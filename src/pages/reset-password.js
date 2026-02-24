@@ -18,7 +18,7 @@ export default function ResetPassword() {
 
     useEffect(() => {
         if (router.isReady) {
-            const resetToken = router.query.token;
+            const resetToken = router.query.token || router.query.oobCode;
             if (resetToken) {
                 setToken(resetToken);
             }
@@ -46,7 +46,7 @@ export default function ResetPassword() {
         setLoading(true);
         try {
             const result = await resetPassword(token, fields.password);
-            if (result.status) {
+            if (result?.status) {
                 toast.success("Password reset successfully");
                 router.push("/");
             }
