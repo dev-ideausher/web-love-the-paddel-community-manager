@@ -422,9 +422,16 @@ const SubCommunitiesTable = () => {
         tagline: selectedItem.title,
         status: newStatus
       };
+      console.log('Toggle payload:', payload);
       const updateResponse = await updateSubCommunity(selectedItem._id, payload);
-      await fetchSubCommunities();
-      setShowToggleStatusModal(false);
+      console.log('Toggle update response:', updateResponse);
+      
+      if (updateResponse.status) {
+        await fetchSubCommunities();
+        setShowToggleStatusModal(false);
+      } else {
+        alert('Failed to update status. Please try again.');
+      }
     } catch (error) {
       console.error("Failed to toggle sub-community status:", error);
       alert('Failed to update status. Please try again.');

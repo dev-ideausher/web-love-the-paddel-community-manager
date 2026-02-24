@@ -8,11 +8,12 @@ import { isRequired } from "@/Utilities/helpers";
 import ButtonWithLoader from "@/components/ButtonWithLoader";
 import { toast } from "react-toastify";
 import { MoveLeft } from "lucide-react";
-import { forgotPasswordAPI } from "@/services/api/userAuth";
+import useFirebaseAuth from "@/services/firebase-services/useFirebaseAuth";
 
 export default function ForgotPassword() {
     const router = useRouter();
     const [loading, setLoading] = useState(false)
+    const { forgotPassword } = useFirebaseAuth();
 
     const [email, setEmail] = useState("");
     const emailHandler = (e) => {
@@ -23,9 +24,8 @@ export default function ForgotPassword() {
         e.preventDefault();
         setLoading(true)
         try {
-            let apiResponse = await forgotPasswordAPI(email)
-
-            if (apiResponse?.status) {
+            const result = await forgotPassword(email);
+            if (result?.status) {
                 router.push("/email-sent")
             }
         }
