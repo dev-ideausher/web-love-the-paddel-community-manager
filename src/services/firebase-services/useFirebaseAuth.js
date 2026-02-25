@@ -61,12 +61,19 @@ export default function useFirebaseAuth() {
   };
   const forgotPassword = async (email) => {
     try {
-      const actionCodeSettings = {
-        url: window.location.origin,
-        handleCodeInApp: false,
-      };
-      
-      const res = await sendPasswordResetEmail(auth, email, actionCodeSettings);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, redirectUrl: window.location.origin }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send reset password email");
+      }
 
       toast.success("Reset password email has been sent successfully", {
         toastId: "firebase-reset-password-sent-message",
@@ -76,9 +83,7 @@ export default function useFirebaseAuth() {
         message: "Reset password email has been sent successfully",
       };
     } catch (e) {
-      const error = firebaseErrorFinder[e.code]
-        ? firebaseErrorFinder[e.code]
-        : "Something went wrong during authentication please refresh and retry";
+      const error = e.message || "Something went wrong during authentication please refresh and retry";
       toast.error(error, {
         toastId: "firebase-error",
       });
