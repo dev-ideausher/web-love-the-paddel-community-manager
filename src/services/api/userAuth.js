@@ -37,18 +37,18 @@ export const forgotPasswordAPI = async (email) => {
     }
 }
 
-export const resetPassword = async (token, newPassword) => {
+export const resetPassword = async (oobCode, newPassword) => {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
     const requestOptions = {
         method: "POST",
         headers: myHeaders,
-        body: JSON.stringify({ token, newPassword }),
+        body: JSON.stringify({ oobCode, newPassword }),
         redirect: "follow"
     };
     try {
-        const response = await fetch(URL + "/auth/reset-password", requestOptions);
+        const response = await fetch(URL + "/auth/confirm-password-reset", requestOptions);
         return responseValidator(response);
     } catch (e) {
         return apiError(e);
