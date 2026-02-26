@@ -213,7 +213,10 @@ const SubCommunitiesTable = () => {
               locationStr = item.location.streetAddress;
             } else if (item.location.position?.coordinates) {
               const [lng, lat] = item.location.position.coordinates;
-              locationStr = `${lat}, ${lng}`;
+              // Only show coordinates if they're not 0,0
+              if (lat !== 0 || lng !== 0) {
+                locationStr = `${lat}, ${lng}`;
+              }
             }
           }
           // Use status field directly if it exists, otherwise fall back to isActive

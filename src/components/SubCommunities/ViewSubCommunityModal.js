@@ -47,12 +47,23 @@ const ViewSubCommunityModal = ({ isOpen, onClose, title, data = {} }) => {
             </span>
           </div>
 
-          <div className="flex flex-row items-center gap-2 ">
-            <MapPin />{" "}
-            <span className="text-lg font-medium">
-              {data?.location || "No location provided"}
-            </span>
-          </div>
+          {(data?.locationData?.streetAddress || data?.locationData?.country || data?.locationData?.state) && (
+            <div className="pb-4">
+              <div className="flex items-center">
+                <MapPin className="w-4 h-4 mr-2 text-gray-600" />
+                <span>
+                  {[data?.locationData?.country, data?.locationData?.state]
+                    .filter(Boolean)
+                    .join(", ") || "Location"}
+                </span>
+              </div>
+              {data?.locationData?.streetAddress && (
+                <p className="ml-6 text-xs text-gray-400">
+                  {data.locationData.streetAddress}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-row justify-between w-full align-center">
             <div className="flex flex-col">

@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import Button from "../Button";
 
 const ConfirmationModal = ({
@@ -13,22 +14,23 @@ const ConfirmationModal = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-70">
-      <div className="py-8 bg-white rounded-lg shadow-lg px-9 w-96">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-black-1">{title}</h2>
-          <button
-            className="text-black text-3xl flex mt-[-30px] justify-end"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </div>
+  return createPortal(
+    <div className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-black/70 flex items-center justify-center">
+      <div className="relative py-8 px-9 bg-white rounded-lg shadow-xl w-96">
+        <button
+          className="absolute top-3 right-4 text-3xl text-black"
+          onClick={onClose}
+        >
+          ×
+        </button>
 
-        <p className="mt-2 text-grey-4">{message}</p>
+        <h2 className="text-lg font-semibold text-black mb-2">
+          {title}
+        </h2>
 
-        <div className="flex justify-center mt-5 space-x-3">
+        <p className="text-grey-4">{message}</p>
+
+        <div className="flex justify-center mt-6 gap-3">
           <Button
             className="py-2 px-5 border-2 bg-[#F5F7F5] text-primary rounded-full"
             onClick={onClose}
@@ -36,12 +38,14 @@ const ConfirmationModal = ({
           >
             {cancelText}
           </Button>
+
           <Button onClick={() => onConfirm(id)} disabled={isProcessing}>
-            Proceed
+            {confirmText}
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

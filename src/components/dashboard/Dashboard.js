@@ -38,7 +38,7 @@ const Dashboard = () => {
       <div className="flex flex-col justify-between gap-[16px] mt-8 mb-6">
         <h1 className="text-2xl font-semibold">Welcome, Community Manager</h1>
         <p className="text-base">
-          Manage your communities, matches, and announcements
+          Manage Your Communities Matches And Announcements
         </p>
       </div>
       <PromoCard summary={dashboardData?.summary} />
