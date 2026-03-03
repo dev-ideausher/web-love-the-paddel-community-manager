@@ -264,12 +264,23 @@ const SubCommunitiesTable = () => {
         return;
       }
 
+      // Check for duplicate name
+      const isDuplicate = originalData.some(
+        (item) => item.title.toLowerCase().trim() === newCommunityData.title.toLowerCase().trim()
+      );
+      if (isDuplicate) {
+        alert('A sub-community with this name already exists. Please choose a different name.');
+        setIsProcessing(false);
+        return;
+      }
+
       const payload = {
         name: newCommunityData.title,
         description: newCommunityData.description,
         parentCommunity: newCommunityData.parentCommunity,
         isSubCommunity: true,
         tagline: newCommunityData.title.length >= 5 ? newCommunityData.title : newCommunityData.description.substring(0, 50),
+        status: newCommunityData.status,
       };
 
       console.log('Creating with payload:', payload);
@@ -300,9 +311,19 @@ const SubCommunitiesTable = () => {
         }
       }
 
-      // Add socialLinks if provided
+      // Add socialLinks only if they have URLs and valid platforms
+      const validPlatforms = ['instagram', 'facebook', 'linkedin'];
       if (newCommunityData.socialLinks && newCommunityData.socialLinks.length > 0) {
-        payload.socialLinks = newCommunityData.socialLinks;
+        const validSocialLinks = newCommunityData.socialLinks
+          .filter(link => 
+            link.url && 
+            link.url.trim() !== "" && 
+            validPlatforms.includes(link.platform.toLowerCase())
+          );
+        console.log('Valid social links:', validSocialLinks);
+        if (validSocialLinks.length > 0) {
+          payload.socialLinks = validSocialLinks;
+        }
       }
 
       // Add location if it exists
@@ -316,15 +337,11 @@ const SubCommunitiesTable = () => {
         };
       }
 
+      console.log('Final payload before API call:', JSON.stringify(payload, null, 2));
+
       const response = await createSubCommunity(payload);
       
       if (response.status) {
-        // If status is inactive, update it after creation
-        if (newCommunityData.status === "inactive" && response.data?._id) {
-          console.log('Attempting to set inactive status for:', response.data._id);
-          const updateResponse = await updateSubCommunity(response.data._id, { isActive: false });
-          console.log('Update response:', updateResponse);
-        }
         setShowCreateModal(false);
         await fetchSubCommunities();
       } else {
@@ -477,9 +494,18 @@ const SubCommunitiesTable = () => {
         }
       }
 
-      // Add social links if provided
+      // Add social links if provided and valid
+      const validPlatforms = ['instagram', 'facebook', 'linkedin'];
       if (updatedData.socialLinks && updatedData.socialLinks.length > 0) {
-        payload.socialLinks = updatedData.socialLinks;
+        const validSocialLinks = updatedData.socialLinks
+          .filter(link => 
+            link.url && 
+            link.url.trim() !== "" && 
+            validPlatforms.includes(link.platform.toLowerCase())
+          );
+        if (validSocialLinks.length > 0) {
+          payload.socialLinks = validSocialLinks;
+        }
       }
 
       // Add location if provided

@@ -2,6 +2,7 @@ import React from "react";
 import { sendPasswordResetLink } from "@/services/profileServices";
 import { toast } from "react-toastify";
 import { auth } from "@/services/firebase-services/firebase";
+import { getCommunityDashboard } from "@/services/api/transactions";
 
 const Field = ({ label, children }) => (
   <div className="flex flex-col pt-4 space-y-1">
@@ -15,16 +16,28 @@ const Field = ({ label, children }) => (
 const SettingsPanel = () => {
   const inputStyle =
     "w-full px-4 py-3 max-w-md bg-[#F5F7F5] border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition";
-  const [fullName, setFullName] = React.useState("");
+  const [communityName, setCommunityName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      setFullName(user.displayName || "");
-      setEmail(user.email || "");
-    }
+    const fetchData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        setEmail(user.email || "");
+      }
+      
+      try {
+        const response = await getCommunityDashboard();
+        if (response.status && response.data?.community?.name) {
+          setCommunityName(response.data.community.name);
+        }
+      } catch (error) {
+        console.error("Failed to fetch community data:", error);
+      }
+    };
+    
+    fetchData();
   }, []);
 
   const handleSendResetLink = async () => {
@@ -34,19 +47,9 @@ const SettingsPanel = () => {
     }
     setIsLoading(true);
     try {
-      const response = await sendPasswordResetLink(email);
-      console.log('Reset link response:', response);
-      if (response.status) {
-        toast.success("Password reset link sent to your email");
-      } else {
-        // Show the actual error message from API
-        const errorMsg = response.message || "Failed to send reset link";
-        toast.error(errorMsg);
-      }
+      await sendPasswordResetLink(email);
     } catch (error) {
       console.error('Reset link error:', error);
-      const errorMessage = error?.message || "Failed to send reset link";
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -57,12 +60,12 @@ const SettingsPanel = () => {
       <div className="flex flex-col w-full gap-4 p-6 m-4 bg-white rounded-2xl">
         <span className="text-xl font-medium">Profile Details</span>
         <div>
-          <Field label="Full Name">
+          <Field label="Community Name">
             <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={communityName}
+              disabled
               className={inputStyle}
-              placeholder="Enter full name"
+              placeholder="Loading..."
             />
           </Field>
           <Field label="Email Address">

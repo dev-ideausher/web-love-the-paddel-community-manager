@@ -104,8 +104,8 @@ const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
           )}
           <div className="flex items-start justify-between w-full align-center">
             <div className="flex flex-col">
-              <p className="text-2xl font-semibold">{data?.members || 0}</p>
-              <p className="text-sm text-gray-600">Members</p>
+              <p className="text-2xl font-semibold">{data?.likes || 0}</p>
+              <p className="text-sm text-gray-600">Likes</p>
             </div>
           </div>
           <button

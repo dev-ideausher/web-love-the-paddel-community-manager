@@ -38,13 +38,19 @@ const ViewSubCommunityModal = ({ isOpen, onClose, title, data = {} }) => {
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="flex flex-col">
-            <span className="text-base font-semibold rs-text-capitalize">
-              {data?.title || "N/A"}
-            </span>
-            <span className="text-sm font-semibold">
-              {data?.description || "No description"}
-            </span>
+          <div className="flex flex-col space-y-3">
+            <div>
+              <label className="text-xs font-bold text-gray-700 uppercase">Community Name</label>
+              <p className="text-base font-semibold rs-text-capitalize">
+                {data?.title || "N/A"}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-700 uppercase">Description</label>
+              <p className="text-sm text-gray-700">
+                {data?.description || "No description"}
+              </p>
+            </div>
           </div>
 
           {(data?.locationData?.streetAddress || data?.locationData?.country || data?.locationData?.state) && (

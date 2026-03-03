@@ -25,6 +25,7 @@ import {
   createMatch,
   createMatche,
   deleteMatch,
+  editMatch,
   getMatchesList,
 } from "@/services/matchServices";
 import { formatDate } from "@/Utilities/helpers";
@@ -35,6 +36,7 @@ const MatchTable = () => {
   const [isClient, setIsClient] = useState(false);
   const [allData, setAllData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
@@ -49,26 +51,17 @@ const MatchTable = () => {
     const communities = res?.data?.results || res?.data || [];
     setSubcommunities(Array.isArray(communities) ? communities : []);
   };
-  const fetchData = async (page = 1, limit = 10, search = "") => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const params = { page, limit };
-      if (search) params.search = search;
+      const params = { page: 1, limit: 100 };
       
+      console.log("Fetching with params:", params);
       const res = await getMatchesList(params);
       console.log("Fetch matches response:", res);
-      console.log("Matches data:", res.data.results);
-      res.data.results.forEach((match, index) => {
-        console.log(`Match ${index + 1} status:`, match.status);
-      });
 
-      setAllData(res.data.results);
+      setOriginalData(res.data.results);
       setFilteredData(res.data.results);
-      setPagination({
-        page: res.data.page,
-        limit: res.data.limit,
-        totalPages: res.data.totalPages,
-      });
     } catch (error) {
       console.error("Failed to fetch matches:", error);
     } finally {
@@ -76,9 +69,9 @@ const MatchTable = () => {
     }
   };
   useEffect(() => {
-    fetchData(pagination.page, pagination.limit);
+    fetchData();
     fetchSubCommunities();
-  }, [pagination.page, pagination.limit]);
+  }, []);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -92,10 +85,8 @@ const MatchTable = () => {
   const handleCreateMatch = async (matchData) => {
     setIsProcessing(true);
     try {
-      await createMatch(matchData).then(() => {
-        fetchData(pagination.page, pagination.limit, searchTerm);
-      });
-
+      await createMatch(matchData);
+      await fetchData();
       setShowCreateModal(false);
     } catch (error) {
       console.error("Failed to create community:", error);
@@ -111,25 +102,36 @@ const MatchTable = () => {
     return data.slice(startIndex, endIndex);
   }, []);
 
-  // Update filtered data based on search (disable for server-side pagination)
+  // Update filtered data based on search
   useEffect(() => {
-    if (searchTerm) {
-      const timeoutId = setTimeout(() => {
-        fetchData(1, pagination.limit, searchTerm);
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [searchTerm]);
+    const timeoutId = setTimeout(() => {
+      const filtered = originalData.filter(
+        (item) =>
+          (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (item.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      setFilteredData(filtered);
+      const totalPages = Math.ceil(filtered.length / pagination.limit) || 1;
+      setPagination((prev) => ({
+        ...prev,
+        page: 1,
+        totalPages,
+      }));
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, originalData, pagination.limit]);
 
   // Update displayed data when pagination or filtered data changes
-  // useEffect(() => {
-  //   const paginatedData = getPaginatedData(
-  //     filteredData,
-  //     pagination.page,
-  //     pagination.limit,
-  //   );
-  //   setAllData(paginatedData);
-  // }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
+  useEffect(() => {
+    const paginatedData = getPaginatedData(
+      filteredData,
+      pagination.page,
+      pagination.limit
+    );
+    setAllData(paginatedData);
+  }, [filteredData, pagination.page, pagination.limit, getPaginatedData]);
 
   // Modal handlers
   const openDeleteModal = (id) => {
@@ -162,18 +164,7 @@ const MatchTable = () => {
     setIsProcessing(true);
     try {
       await deleteMatch(id);
-      // Filter from original data and re-paginate
-      const newFiltered = filteredData.filter(
-        (item) => item._id !== selectedDelete,
-      );
-      setFilteredData(newFiltered);
-
-      // Update pagination if needed
-      const newTotalPages = Math.ceil(newFiltered.length / pagination.limit);
-      if (pagination.page > newTotalPages && newTotalPages > 0) {
-        setPagination((prev) => ({ ...prev, page: newTotalPages }));
-      }
-
+      await fetchData();
       closeDeleteModal();
     } catch (error) {
       console.error("Failed to delete match:", error);
@@ -188,7 +179,7 @@ const MatchTable = () => {
       console.log('Canceling match with ID:', id);
       const response = await cancelMatch(id);
       console.log('Cancel response:', response);
-      await fetchData(pagination.page, pagination.limit, searchTerm);
+      await fetchData();
       setShowInactiveModal(false);
     } catch (error) {
       console.error("Failed to cancel match:", error);
@@ -200,14 +191,10 @@ const MatchTable = () => {
 
   const handleEditSave = async (updatedData) => {
     setIsProcessing(true);
-
     try {
-      console.log(updatedData);
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, ...updatedData } : item,
-        ),
-      );
+      console.log('Updating match with data:', updatedData);
+      await editMatch(selectedItem._id, updatedData);
+      await fetchData();
       setShowEditModal(false);
     } catch (error) {
       console.error("Failed to update match:", error);
@@ -216,7 +203,7 @@ const MatchTable = () => {
     }
   };
 
-  // Get current page data (use allData directly for server-side pagination)
+  // Get current page data
   const currentPageData = allData;
 
   return (
@@ -275,7 +262,7 @@ const MatchTable = () => {
 
       <div className="flex items-center justify-between m-4 mb-6">
         <InputWithLabel
-          placeholder="Search by title or description"
+          placeholder="Search by match name"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md rounded-full text-zinc-500"
@@ -303,7 +290,7 @@ const MatchTable = () => {
       <div className="pt-2 m-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-600">
-            Showing {allData.length} of {pagination.totalPages * pagination.limit} entries
+            Showing {allData.length} of {filteredData.length} entries
           </span>
         </div>
 
@@ -413,7 +400,7 @@ const MatchTable = () => {
           </TableBody>
         </Table>
 
-        <Pagination pagination={pagination} setPagination={setPagination} />
+        <Pagination pagination={pagination} setPagination={setPagination} totalItems={filteredData.length} />
       </div>
     </div>
     </GoogleMapsProvider>

@@ -198,7 +198,7 @@ const EditMatchModal = ({
 
           <Field label="Sub Community">
             <select
-              value={formData.subCommunity?._id || formData.subCommunity?.name || ""}
+              value={formData.subCommunity?._id || ""}
               onChange={(e) => {
                 const value = e.target.value;
                 const apiSubCommunities = subCommunities?.results || subCommunities || [];
@@ -207,17 +207,16 @@ const EditMatchModal = ({
                 );
                 if (selected) {
                   handleChange("subCommunity", selected);
-                } else {
-                  handleChange("subCommunity", { _id: value, name: value });
                 }
               }}
               className={inputStyle}
             >
               <option value="">Select</option>
-              <option value="master">Master community</option>
-              <option value="downtown">Downtown padel club</option>
-              <option value="eastside">East side courts</option>
-              <option value="westvalley">West valley arena</option>
+              {(subCommunities?.results || subCommunities || []).map((community) => (
+                <option key={community._id} value={community._id}>
+                  {community.name}
+                </option>
+              ))}
             </select>
           </Field>
 

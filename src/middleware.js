@@ -30,7 +30,7 @@ export function middleware(req) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    if (token && publicRoutes.includes(pathname)) {
+    if (token && publicRoutes.includes(pathname) && pathname !== "/reset-password") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

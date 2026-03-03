@@ -25,7 +25,6 @@ const CreateSubCommunityModal = ({
   const [socialLinks, setSocialLinks] = useState([
     { platform: "instagram", url: "" },
     { platform: "facebook", url: "" },
-    { platform: "twitter", url: "" },
     { platform: "linkedin", url: "" },
   ]);
   const [errors, setErrors] = useState({});
@@ -236,11 +235,14 @@ const CreateSubCommunityModal = ({
 
       if (!validateForm()) return;
 
+      const filteredSocialLinks = socialLinks.filter(link => link.url && link.url.trim() !== "");
+      console.log('Filtered social links before save:', filteredSocialLinks);
+
       onSave({
         ...formData,
         images,
         profilePic,
-        socialLinks: socialLinks.filter(link => link.url.trim() !== ""),
+        socialLinks: filteredSocialLinks,
         parentCommunity: parentCommunityId,
       });
     },
@@ -266,7 +268,6 @@ const CreateSubCommunityModal = ({
       setSocialLinks([
         { platform: "instagram", url: "" },
         { platform: "facebook", url: "" },
-        { platform: "twitter", url: "" },
         { platform: "linkedin", url: "" },
       ]);
       setErrors({});
@@ -424,14 +425,14 @@ const CreateSubCommunityModal = ({
                   {socialLinks.map((link) => (
                     <div key={link.platform}>
                       <label className="block mb-1 text-xs text-gray-600 capitalize">
-                        {link.platform === "twitter" ? "X (Twitter)" : link.platform}
+                        {link.platform}
                       </label>
                       <input
                         type="url"
                         value={link.url}
                         onChange={(e) => handleSocialLinkChange(link.platform, e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={`https://${link.platform === "twitter" ? "x.com" : link.platform + ".com"}/yourprofile`}
+                        placeholder={`https://${link.platform}.com/yourprofile`}
                         disabled={isLoading}
                       />
                     </div>

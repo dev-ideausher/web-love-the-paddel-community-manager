@@ -57,7 +57,7 @@ export const uploadFile = async (file) => {
 
   try {
     const response = await fetch(endpoint, requestOptions);
-    const result = await responseValidator(response, true);
+    const result = await responseValidator(response, false); // Don't show toast for individual uploads
     
     if (result.status && result.data && result.data.length > 0) {
       return { status: true, data: { url: result.data[0].url } };

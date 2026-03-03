@@ -7,7 +7,7 @@ const Transactions = () => {
   const [summary, setSummary] = useState(null);
 
   return (
-    <Layout title="Dashboard">
+    <Layout title="Transactions">
       <TransactionCards summary={summary} />
       <TransactionTable onSummaryUpdate={setSummary} />
     </Layout>

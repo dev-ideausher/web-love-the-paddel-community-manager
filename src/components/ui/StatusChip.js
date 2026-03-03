@@ -15,7 +15,7 @@ const StatusChip = ({ status, className = "" }) => {
     completed:
       "border-green text-green-800 ring-green-200/50  shadow-green-100/50",
     failed: "border-red text-red-800 ring-red-200/50  shadow-red-100/50",
-    cancelled: "border-gray text-gray-800 ring-gray-200/50  shadow-gray-100/50",
+    cancelled: "border-red text-red-800 ring-red-200/50  shadow-red-100/50",
   };
 
   const statusStyle =
