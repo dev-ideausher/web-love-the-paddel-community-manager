@@ -64,9 +64,12 @@ const ViewAnnouncementDetails = ({ isOpen, onClose, title, data = {} }) => {
             <span className="text-2xl font-semibold rs-text-capitalize pb-[17px]">
               {data?.title || "N/A"}
             </span>
-            <span className="text-base font-semibold">
-              {data?.subtitle || "No description"}
-            </span>
+            {data?.subtitle && (
+              <span className="text-base font-semibold">
+                {data.subtitle}
+              </span>
+            )}
+            <span className="mt-4">Description</span>
             <span className="text-sm font-semibold">
               {data?.description || "No description"}
             </span>

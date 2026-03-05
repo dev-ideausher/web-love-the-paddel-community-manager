@@ -247,6 +247,7 @@ const AnnounementTable = () => {
           status: item.status || "active",
           images: item.image ? [item.image] : [],
           svgType: item.svgType || "GENERAL",
+          likes: item.likes || item.likedBy?.length || 0,
         }));
         setOriginalData(formattedData);
         setFilteredData(formattedData);
@@ -540,9 +541,6 @@ const AnnounementTable = () => {
                 Date Created
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Type
-              </TableHead>
-              <TableHead className="text-sm font-normal text-left text-white">
                 Status
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
@@ -554,7 +552,7 @@ const AnnounementTable = () => {
             {currentPageData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={6}
                   className="py-12 text-center text-gray-500"
                 >
                   {filteredData.length === 0
@@ -588,11 +586,6 @@ const AnnounementTable = () => {
                   <TableCell className="text-left">
                     <span className="text-sm font-normal text-black-3">
                       {item?.dateCreated || "N/A"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-left">
-                    <span className="text-sm font-normal text-black-3">
-                      {item?.svgType || "GENERAL"}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">
