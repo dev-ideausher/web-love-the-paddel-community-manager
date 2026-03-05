@@ -151,6 +151,7 @@ const TransactionTable = ({ onSummaryUpdate }) => {
   const [isClient, setIsClient] = useState(false);
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [downloadingCSV, setDownloadingCSV] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     page: 1,
@@ -201,6 +202,58 @@ const TransactionTable = ({ onSummaryUpdate }) => {
     }
   }, [pagination.page, pagination.limit, searchTerm, filter, onSummaryUpdate]);
 
+  // Download all transactions as CSV
+  const handleDownloadCSV = async () => {
+    setDownloadingCSV(true);
+    try {
+      const payload = {
+        page: 1,
+        limit: pagination.totalResults || 10000, // Fetch all results
+      };
+      
+      if (searchTerm) {
+        payload.search = searchTerm;
+      }
+      
+      if (filter && filter !== "all") {
+        payload.status = filter;
+      }
+
+      const response = await getCommunityTransactions(payload);
+      
+      if (response.status && response.data?.results) {
+        const columns = [
+          { header: "Transaction ID", key: "_id" },
+          { header: "Community", key: "communityName" },
+          { header: "Match", key: "matchName" },
+          { header: "Amount", key: "amount" },
+          { header: "Currency", key: "currency" },
+          { header: "Date", key: "transactionDate" },
+          { header: "Status", key: "paymentStatus" },
+        ];
+        
+        const formattedData = response.data.results.map(item => ({
+          _id: item._id || "N/A",
+          communityName: item.communityMatch?.community?.name || "N/A",
+          matchName: item.communityMatch?.name || "N/A",
+          amount: item.amount || 0,
+          currency: item.currency || "",
+          transactionDate: formatDate(item.transactionDate),
+          paymentStatus: item.paymentStatus || "pending",
+        }));
+        
+        downloadCSV(columns, formattedData, "transactions.csv");
+      } else {
+        alert("No data available to export.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch all transactions:", error);
+      alert("Failed to download CSV. Please try again.");
+    } finally {
+      setDownloadingCSV(false);
+    }
+  };
+
   // Fetch data on mount and when dependencies change
   useEffect(() => {
     fetchTransactions();
@@ -238,10 +291,11 @@ const TransactionTable = ({ onSummaryUpdate }) => {
 
           <Button
             className="flex gap-1 py-3 whitespace-nowrap"
-            onClick={() => downloadCSV(allData, "transactions")}
+            onClick={handleDownloadCSV}
+            disabled={downloadingCSV}
           >
-            <Download />
-            Download CSV
+            {downloadingCSV ? <ClipLoader color="white" size={16} /> : <Download />}
+            {downloadingCSV ? "Downloading..." : "Download CSV"}
           </Button>
         </div>
       </div>
