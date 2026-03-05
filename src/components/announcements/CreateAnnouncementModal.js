@@ -148,6 +148,7 @@ const CreateAnnouncementModal = ({
     (e) => {
       e.preventDefault();
 
+      if (isLoading) return; // Prevent double submission
       if (!validateForm()) return;
 
       onSave({
@@ -155,7 +156,7 @@ const CreateAnnouncementModal = ({
         images,
       });
     },
-    [formData, images, onSave, validateForm]
+    [formData, images, onSave, validateForm, isLoading]
   );
 
   // Fetch sub-communities
