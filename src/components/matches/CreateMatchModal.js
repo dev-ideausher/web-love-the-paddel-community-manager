@@ -274,7 +274,18 @@ const handleSubmit = (e) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="sticky top-0 px-6 py-4 bg-white border-b rounded-t-lg">
-          <h2 className="text-xl font-semibold text-gray-900">Create Match</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">Create Match</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4 overflow-y-auto flex-1">
@@ -293,7 +304,7 @@ const handleSubmit = (e) => {
               onChange={(e) => handleChange("subCommunity", e.target.value)}
               className={`${inputStyle} ${errors.subCommunity ? 'border-red-300' : ''}`}
             >
-              <option value="">Select</option>
+              <option value="" disabled>Select</option>
               {Array.isArray(subCommunities) && subCommunities.map((community) => (
                 <option key={community._id} value={community._id}>
                   {community.name}
@@ -308,7 +319,7 @@ const handleSubmit = (e) => {
               onChange={(e) => handleChange("duration", e.target.value)}
               className={`${inputStyle} ${errors.duration ? 'border-red-300' : ''}`}
             >
-              <option value="">Select</option>
+              <option value="" disabled>Select</option>
               <option>30 mins</option>
               <option>60 mins</option>
               <option>90 mins</option>
@@ -323,7 +334,7 @@ const handleSubmit = (e) => {
               onChange={(e) => handleChange("matchType", e.target.value)}
               className={`${inputStyle} ${errors.matchType ? 'border-red-300' : ''}`}
             >
-              <option value="">Select</option>
+              <option value="" disabled>Select</option>
               <option value="verified">Verified</option>
               <option value="unverified">Unverified</option>
             </select>
