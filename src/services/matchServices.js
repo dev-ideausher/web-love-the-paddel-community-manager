@@ -135,7 +135,7 @@ export const cancelMatch = async (id) => {
 };
 
 export const editMatch = async (id, payload) => {
-  const endpoint = `${URL}/matches/${id}`;
+  const endpoint = `${URL}/communities/matches/${id}`;
   const token = await getAuthToken();
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);

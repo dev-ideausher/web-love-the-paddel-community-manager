@@ -28,7 +28,7 @@ import StatusChip from "../ui/StatusChip";
 import ViewAnnouncementDetails from "./ViewAnnouncementDetails";
 import CreateAnnouncementModal from "./CreateAnnouncementModal";
 import EditAnnouncementModal from "./EditAnnouncementModal";
-import { createAnnouncement, getAnnouncementsList, deleteAnnouncement } from "@/services/announcementServices";
+import { createAnnouncement, getAnnouncementsList, deleteAnnouncement, updateAnnouncement } from "@/services/announcementServices";
 import { uploadFile } from "@/services/uploadServices";
 import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
@@ -224,11 +224,26 @@ const AnnounementTable = () => {
   const [selectedDelete, setSelectedDelete] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [subCommunitiesList, setSubCommunitiesList] = useState([]);
 
-  // Fetch announcements from API
-  const fetchAnnouncements = useCallback(async () => {
+  // Fetch both subcommunities and announcements
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch subcommunities first
+      const subCommResponse = await getSubCommunitiesList({ limit: 100 });
+      let subCommunitiesData = [];
+      if (subCommResponse.status && subCommResponse.data) {
+        subCommunitiesData = Array.isArray(subCommResponse.data.results) 
+          ? subCommResponse.data.results 
+          : Array.isArray(subCommResponse.data) 
+          ? subCommResponse.data 
+          : [];
+      }
+      // persist to state so modals can use it
+      setSubCommunitiesList(subCommunitiesData);
+
+      // Then fetch announcements
       const response = await getAnnouncementsList({ limit: 100 });
       if (response.status && response.data) {
         const dataArray = Array.isArray(response.data.results) 
@@ -237,31 +252,54 @@ const AnnounementTable = () => {
           ? response.data 
           : [];
         
-        const formattedData = dataArray.map(item => ({
-          _id: item._id,
-          title: item.title,
-          subtitle: item.subtitle || "",
-          description: item.description,
-          dateCreated: new Date(item.createdAt).toISOString().split("T")[0],
-          members: 0,
-          status: item.status || "active",
-          images: item.image ? [item.image] : [],
-          svgType: item.svgType || "GENERAL",
-          likes: item.likes || item.likedBy?.length || 0,
-        }));
+        const formattedData = dataArray.map(item => {
+          // Normalize community / sub-community value:
+          let communityName = "N/A";
+          if (item.communityId) {
+            if (typeof item.communityId === "object") {
+              communityName =
+                item.communityId.parentCommunity?.name ||
+                item.communityId.name ||
+                item.communityId.title ||
+                "N/A";
+            } else {
+              const sc = subCommunitiesData.find((s) => s._id === item.communityId);
+              communityName = sc?.parentCommunity?.name || sc?.name || "N/A";
+            }
+          }
+
+          const dateCreated = item.createdAt
+            ? new Date(item.createdAt).toISOString().split("T")[0]
+            : item.dateCreated || "N/A";
+
+          return {
+            _id: item._id,
+            title: item.title,
+            subtitle: item.subtitle || "",
+            description: item.description,
+            community: communityName,
+            dateCreated,
+            members: 0,
+            status: item.status || "active",
+            images: item.image ? [item.image] : [],
+            svgType: item.svgType || "GENERAL",
+            likes: item.likes || item.likedBy?.length || 0,
+            subCommunity: item.communityId,
+          };
+        });
         setOriginalData(formattedData);
         setFilteredData(formattedData);
       }
     } catch (error) {
-      console.error("Failed to fetch announcements:", error);
+      console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
+    fetchData();
+  }, [fetchData]);
 
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
@@ -290,7 +328,7 @@ const AnnounementTable = () => {
       
       if (result.status) {
         setShowCreateModal(false);
-        await fetchAnnouncements();
+        await fetchData();
       } else {
         alert('Failed to create announcement: ' + (result.message || 'Unknown error'));
       }
@@ -318,7 +356,8 @@ const AnnounementTable = () => {
       const filtered = originalData.filter(
         (item) =>
           (item.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+          (item.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+         (item.community || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       setFilteredData(filtered);
@@ -373,7 +412,7 @@ const AnnounementTable = () => {
     setIsProcessing(true);
     try {
       await deleteAnnouncement(selectedDelete);
-      await fetchAnnouncements();
+      await fetchData();
       closeDeleteModal();
     } catch (error) {
       console.error("Failed to delete announcement:", error);
@@ -405,17 +444,35 @@ const AnnounementTable = () => {
   const handleEditSave = async (updatedData) => {
     setIsProcessing(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const payload = {
+        title: updatedData.title,
+        description: updatedData.description,
+        type: "text",
+      };
 
-      setFilteredData((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? { ...item, ...updatedData } : item
-        )
-      );
-      setShowEditModal(false);
+      if (updatedData.images?.length > 0) {
+        const file = updatedData.images[0];
+        
+        if (file.type?.startsWith("video/")) {
+          payload.type = "video";
+          payload.video = file;
+        } else if (file.type?.startsWith("image/")) {
+          payload.type = "image";
+          payload.image = file;
+        }
+      }
+
+      const result = await updateAnnouncement(selectedItem._id, payload);
+      
+      if (result.status) {
+        await fetchData();
+        setShowEditModal(false);
+      } else {
+        alert('Failed to update announcement: ' + (result.message || 'Unknown error'));
+      }
     } catch (error) {
-      console.error("Failed to update sub-community:", error);
+      console.error("Failed to update announcement:", error);
+      alert('Error: ' + error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -436,6 +493,7 @@ const AnnounementTable = () => {
         onClose={() => setShowCreateModal(false)}
         onSave={handleCreateCommunity}
         isLoading={isProcessing}
+        subCommunities={subCommunitiesList}
       />
       {/* Delete Modal */}
       <DeleteModal
@@ -463,6 +521,7 @@ const AnnounementTable = () => {
         title={`Edit ${selectedItem?.title || ""}`}
         initialData={selectedItem || {}}
         isLoading={isProcessing}
+        subCommunities={subCommunitiesList}
         fields={[
           { key: "title", label: "Community Name", required: true },
           { key: "description", label: "Description", required: true },
@@ -493,14 +552,14 @@ const AnnounementTable = () => {
 
       <div className="flex items-center justify-between m-4 mb-6">
         <InputWithLabel
-          placeholder="Search by title or Community"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md rounded-full text-zinc-500"
-          iconType={"pre"}
-        >
-          <SearchIcon />
-        </InputWithLabel>
+          placeholder="Search by title or Sub-Community"
+           value={searchTerm}
+           onChange={(e) => setSearchTerm(e.target.value)}
+           className="max-w-md rounded-full text-zinc-500"
+           iconType={"pre"}
+         >
+           <SearchIcon />
+         </InputWithLabel>
 
         <div className="flex gap-6">
           <Button
@@ -535,7 +594,7 @@ const AnnounementTable = () => {
                 Title
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
-                Community
+                Sub-Community
               </TableHead>
               <TableHead className="text-sm font-normal text-left text-white">
                 Date Created
@@ -580,7 +639,7 @@ const AnnounementTable = () => {
                   </TableCell>
                   <TableCell className="text-left">
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item?.description || "N/A"}
+                      {item?.community || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">

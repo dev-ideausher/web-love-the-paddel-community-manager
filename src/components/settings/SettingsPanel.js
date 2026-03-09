@@ -19,25 +19,29 @@ const SettingsPanel = () => {
   const [communityName, setCommunityName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isDataLoading, setIsDataLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const fetchData = async () => {
-      const user = auth.currentUser;
+    setIsDataLoading(true);
+    
+    // Wait for auth to be ready
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setEmail(user.email || "");
-      }
-      
-      try {
-        const response = await getCommunityDashboard();
-        if (response.status && response.data?.community?.name) {
-          setCommunityName(response.data.community.name);
+        
+        try {
+          const response = await getCommunityDashboard();
+          if (response.status && response.data?.community?.name) {
+            setCommunityName(response.data.community.name);
+          }
+        } catch (error) {
+          console.error("Failed to fetch community data:", error);
         }
-      } catch (error) {
-        console.error("Failed to fetch community data:", error);
       }
-    };
+      setIsDataLoading(false);
+    });
     
-    fetchData();
+    return () => unsubscribe();
   }, []);
 
   const handleSendResetLink = async () => {
@@ -62,19 +66,18 @@ const SettingsPanel = () => {
         <div>
           <Field label="Community Name">
             <input
-              value={communityName}
+              value={isDataLoading ? "Loading..." : communityName}
               disabled
               className={inputStyle}
-              placeholder="Loading..."
+              placeholder="No community name"
             />
           </Field>
           <Field label="Email Address">
             <input
-              value={email}
+              value={isDataLoading ? "Loading..." : email}
               disabled
-              onChange={(e) => setEmail(e.target.value)}
               className={inputStyle}
-              placeholder="Enter email address"
+              placeholder="No email"
             />
           </Field>
           <button className="px-6 py-3 mt-4 text-sm font-medium text-white transition bg-black rounded-xl hover:bg-black/80">

@@ -27,7 +27,7 @@ const EditMatchModal = ({
     skillRange: [],
     date: "",
     startTime: "",
-    time: "",
+    endTime: "",
     maxPlayers: "",
     price: "",
     location: {
@@ -92,12 +92,10 @@ const EditMatchModal = ({
 
   const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
   const toggleSkill = (skill) => {
-    setFormData((prev) => ({
-      ...prev,
-      skillRange: prev.skillRange.includes(skill)
-        ? prev.skillRange.filter((s) => s !== skill)
-        : [...prev.skillRange, skill],
-    }));
+    const newSkillRange = formData.skillRange.includes(skill)
+      ? formData.skillRange.filter((s) => s !== skill)
+      : [...formData.skillRange, skill];
+    handleChange("skillRange", newSkillRange);
   };
 
   useEffect(() => {
@@ -113,17 +111,32 @@ const EditMatchModal = ({
         setMapCenter({ lat, lng });
       }
 
+      // Map duration from API format to display format
+      const durationMap = {
+        "30mins": "30 mins",
+        "60mins": "60 mins",
+        "90mins": "90 mins",
+        "24hours": "24 hours",
+        "48hours": "48 hours",
+      };
+      const displayDuration = durationMap[initialData.duration] || initialData.duration || "";
+      
+      // Extract time from startTime and endTime ISO strings
+      const startTimeStr = initialData.startTime || "";
+      const endTimeStr = initialData.endTime || "";
+      const startTimeValue = startTimeStr ? startTimeStr.slice(11, 16) : "";
+      const endTimeValue = endTimeStr ? endTimeStr.slice(11, 16) : "";
+
       setFormData({
         matchName: initialData.name || "",
         subCommunity: initialData.community || {},
-        duration: initialData.duration || "",
+        duration: displayDuration,
         matchType: initialData.currentVerificationStatus || "",
         matchMode: initialData.matchMode || "",
         skillRange: initialData.skills || [],
         date: initialData.date || "",
-        time: initialData.time || "",
-        startTime: initialData.startTime || "",
-        endTime: initialData.endTime || "",
+        startTime: startTimeValue,
+        endTime: endTimeValue,
         maxPlayers: initialData.playersRequired || "",
         price: initialData.price || "",
         location: {
@@ -136,11 +149,34 @@ const EditMatchModal = ({
   }, [isOpen, initialData, subCommunitiesData]);
 
   const handleChange = useCallback((key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [key]: value };
+      
+      // Auto-calculate end time when start time or duration changes
+      if ((key === 'startTime' || key === 'duration') && newData.startTime && newData.duration) {
+        const durationMinutes = parseInt(newData.duration.split(' ')[0]);
+        const [hours, minutes] = newData.startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+        newData.endTime = endDate.toTimeString().slice(0, 5);
+      }
+      
+      return newData;
+    });
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Map duration from display format to API format
+    const durationMap = {
+      "30 mins": "30mins",
+      "60 mins": "60mins",
+      "90 mins": "90mins",
+      "24 hours": "24hours",
+      "48 hours": "48hours",
+    };
     
     // Transform form data to API format
     const apiPayload = {
@@ -155,13 +191,17 @@ const EditMatchModal = ({
         }
       },
       date: formData.date,
-      startTime: `${formData.date.split('T')[0]}T${formData.time}:00.000Z`,
+      startTime: `${formData.date.split('T')[0]}T${formData.startTime}:00.000Z`,
+      endTime: `${formData.date.split('T')[0]}T${formData.endTime}:00.000Z`,
       playersRequired: parseInt(formData.maxPlayers),
       price: parseFloat(formData.price),
       skills: formData.skillRange,
       matchMode: formData.matchMode,
+      duration: durationMap[formData.duration] || formData.duration,
+      currentVerificationStatus: formData.matchType,
     };
     
+    console.log('Edit match payload:', apiPayload);
     onSave(apiPayload);
   };
 
@@ -196,7 +236,7 @@ const EditMatchModal = ({
             />
           </Field>
 
-          <Field label="Sub Community">
+          <Field label="Community">
             <select
               value={formData.subCommunity?._id || ""}
               onChange={(e) => {
@@ -214,7 +254,7 @@ const EditMatchModal = ({
               <option value="">Select</option>
               {(subCommunities?.results || subCommunities || []).map((community) => (
                 <option key={community._id} value={community._id}>
-                  {community.name}
+                  {community.parentCommunity?.name || community.name}
                 </option>
               ))}
             </select>
@@ -300,20 +340,32 @@ const EditMatchModal = ({
             />
           </Field>
 
-          <Field label="Time">
-            <input
-              type="time"
-              value={formData.startTime.slice(11, 16)}
-              onChange={(e) => {
-                handleChange("time", e.target.value);
-              }}
-              className={inputStyle}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start Time">
+              <input
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => {
+                  handleChange("startTime", e.target.value);
+                }}
+                className={inputStyle}
+              />
+            </Field>
+
+            <Field label="End Time">
+              <input
+                type="time"
+                value={formData.endTime}
+                readOnly
+                className={`${inputStyle} bg-gray-50`}
+              />
+            </Field>
+          </div>
 
           <Field label="Max Players">
             <input
               type="number"
+              min="1"
               value={formData.maxPlayers}
               onChange={(e) => handleChange("maxPlayers", e.target.value)}
               className={inputStyle}
@@ -323,13 +375,14 @@ const EditMatchModal = ({
 
           <Field label="Price">
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">AED</span>
               <input
                 type="number"
+                min="0"
                 step="0.01"
                 value={formData.price}
                 onChange={(e) => handleChange("price", e.target.value)}
-                className={`${inputStyle} pl-8`}
+                className={`${inputStyle} pl-14`}
                 placeholder="0.00"
               />
             </div>
@@ -405,13 +458,13 @@ const EditMatchModal = ({
               Cancel
             </Button>
 
-            <Button
+            <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 rounded-full"
+              className="flex-1 rounded-full px-4 py-2 bg-black text-white hover:bg-black/90 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? <ClipLoader size={18} color="white" /> : "Save"}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

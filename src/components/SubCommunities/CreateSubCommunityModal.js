@@ -167,7 +167,12 @@ const CreateSubCommunityModal = ({
   // Handle profile pic selection
   const handleProfilePicSelect = useCallback((e) => {
     const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        alert(`Invalid file: ${file.name}. Please select only image files.`);
+        e.target.value = "";
+        return;
+      }
       setProfilePic(file);
       setProfilePicPreview(URL.createObjectURL(file));
     }
@@ -179,29 +184,49 @@ const CreateSubCommunityModal = ({
       const files = Array.from(e.target.files);
       const newImages = [];
       const newPreviews = [];
+      const invalidFiles = [];
+      let exceededLimit = false;
 
       files.forEach((file) => {
-        if (
-          file.type.startsWith("image/") &&
-          images.length + newImages.length < 20
-        ) {
+        if (!file.type.startsWith("image/")) {
+          invalidFiles.push(file.name);
+        } else if (images.length + newImages.length < 20) {
           newImages.push(file);
           newPreviews.push(URL.createObjectURL(file));
+        } else {
+          exceededLimit = true;
         }
       });
 
-      setImages((prev) => [...prev, ...newImages]);
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      if (invalidFiles.length > 0) {
+        alert(`Invalid file(s): ${invalidFiles.join(", ")}. Please select only image files.`);
+      }
+
+      if (exceededLimit) {
+        setErrors((prev) => ({ ...prev, images: `Cannot upload more than 20 images. Please remove ${images.length + files.length - 20} image(s) to continue.` }));
+      }
+
+      if (newImages.length > 0) {
+        setImages((prev) => [...prev, ...newImages]);
+        setImagePreviews((prev) => [...prev, ...newPreviews]);
+      }
+      
+      e.target.value = "";
     },
     [images.length]
   );
 
   // Remove image
   const removeImage = useCallback((index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) => {
+      const newImages = prev.filter((_, i) => i !== index);
+      if (newImages.length <= 20) {
+        setErrors((prevErrors) => ({ ...prevErrors, images: "" }));
+      }
+      return newImages;
+    });
     setImagePreviews((prev) => {
       const newPreviews = prev.filter((_, i) => i !== index);
-      // Cleanup revoked URLs
       prev[index] && URL.revokeObjectURL(prev[index]);
       return newPreviews;
     });
@@ -232,6 +257,12 @@ const CreateSubCommunityModal = ({
   const handleSubmit = useCallback(
     (e) => {
       e.preventDefault();
+
+      // Check image limit first
+      if (images.length > 20) {
+        setErrors((prev) => ({ ...prev, images: `Cannot create community with more than 20 images. Please remove ${images.length - 20} image(s) first.` }));
+        return;
+      }
 
       if (!validateForm()) return;
 
@@ -499,11 +530,12 @@ const CreateSubCommunityModal = ({
                     }`}
                   >
                     <Upload className="w-5 h-5" />
-                    {images.length >= 20
-                      ? "Maximum files reached"
-                      : `Add images (${images.length}/20)`}
+                    {`Add images (${images.length}/20)`}
                   </label>
                 </div>
+                {errors.images && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">{errors.images}</p>
+                )}
 
                 {/* Image Previews */}
                 {imagePreviews.length > 0 && (
@@ -545,7 +577,13 @@ const CreateSubCommunityModal = ({
               <Button
                 type="submit"
                 className="flex items-center gap-2 px-8 py-3 text-white transition-colors rounded-3xl bg-buttontext "
-                disabled={isLoading}
+                disabled={isLoading || images.length > 20}
+                onClick={(e) => {
+                  if (images.length > 20) {
+                    e.preventDefault();
+                    setErrors((prev) => ({ ...prev, images: `Cannot create community with more than 20 images. Please remove ${images.length - 20} image(s) first.` }));
+                  }
+                }}
               >
                 {isLoading ? (
                   <ClipLoader color="white" size={20} />

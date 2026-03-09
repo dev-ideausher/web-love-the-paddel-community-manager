@@ -2,14 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 import { X, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
-
-const subCommunities = [
-  "General",
-  "Events",
-  "Support",
-  "Announcements",
-  "Media",
-];
+import { getSubCommunitiesList } from "@/services/subCommunityServices";
 
 const announcementTypes = [
   { value: "GENERAL", label: "General" },
@@ -29,12 +22,14 @@ const EditAnnouncementModal = ({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    subCommunity: "General",
+    subCommunity: "",
     images: [],
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [errors, setErrors] = useState({});
+  const [subCommunities, setSubCommunities] = useState([]);
+  const [loadingSubCommunities, setLoadingSubCommunities] = useState(false);
 
   // Cleanup previews on unmount
   useEffect(() => {
@@ -46,18 +41,55 @@ const EditAnnouncementModal = ({
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen && initialData) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         title: initialData.title || "",
         description: initialData.description || "",
-        subCommunity: initialData.subCommunity || "General",
+        // handle both object and id forms
+        subCommunity:
+          initialData.subCommunity && typeof initialData.subCommunity === "object"
+            ? initialData.subCommunity._id || initialData.subCommunity.id || ""
+            : initialData.subCommunity || "",
         images: initialData.images || [],
-      });
+      }));
       // Reset new images when editing
       setImages([]);
       setImagePreviews([]);
       setErrors({});
     }
   }, [isOpen, initialData]);
+
+  // Fetch sub-communities when modal opens (so the select has real options)
+  useEffect(() => {
+    let mounted = true;
+    const fetchSubCommunities = async () => {
+      setLoadingSubCommunities(true);
+      try {
+        const resp = await getSubCommunitiesList({ limit: 100 });
+        if (!mounted) return;
+        if (resp?.status && resp?.data) {
+          const dataArray = Array.isArray(resp.data.results)
+            ? resp.data.results
+            : Array.isArray(resp.data)
+            ? resp.data
+            : [];
+          setSubCommunities(dataArray);
+        } else {
+          setSubCommunities([]);
+        }
+      } catch (err) {
+        console.error("Failed to load sub-communities:", err);
+        setSubCommunities([]);
+      } finally {
+        if (mounted) setLoadingSubCommunities(false);
+      }
+    };
+
+    if (isOpen) fetchSubCommunities();
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen]);
 
   const handleInputChange = useCallback(
     (key, value) => {
@@ -206,26 +238,23 @@ const EditAnnouncementModal = ({
             {/* Sub Community */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Sub Community <span className="text-red-500">*</span>
+                Community <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.subCommunity}
-                onChange={(e) =>
-                  handleInputChange("subCommunity", e.target.value)
-                }
+                onChange={(e) => handleInputChange("subCommunity", e.target.value)}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
                   errors.subCommunity ? "border-red-300" : "border-gray-300"
                 }`}
                 disabled={isLoading}
               >
-                <option value="" disabled>
-                  Select a sub community
-                </option>
-                {subCommunities.map((option, idx) => (
-                  <option key={idx} value={option}>
-                    {option}
-                  </option>
-                ))}
+                <option value="">Select sub-community</option>
+                {Array.isArray(subCommunities) &&
+                  subCommunities.map((sc) => (
+                    <option key={sc._id || sc.id} value={sc._id || sc.id}>
+                      {sc.name || sc.title || sc}
+                    </option>
+                  ))}
               </select>
               {errors.subCommunity && (
                 <p className="mt-1 text-sm text-red-600">

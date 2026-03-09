@@ -93,6 +93,41 @@ export const createAnnouncement = async (payload) => {
   }
 };
 
+export const updateAnnouncement = async (id, payload) => {
+  const endpoint = `${URL}/announcements/${id}`;
+  const token = await getAuthToken();
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${token}`);
+
+  const formData = new FormData();
+  if (payload.title) formData.append("title", payload.title);
+  if (payload.description) formData.append("description", payload.description);
+  if (payload.type) formData.append("type", payload.type);
+  if (payload.svgType) formData.append("svgType", payload.svgType);
+  
+  if (payload.image) {
+    const compressed = await compressImage(payload.image);
+    formData.append("image", compressed);
+  }
+  if (payload.video) {
+    formData.append("video", payload.video);
+  }
+
+  const requestOptions = {
+    method: "PUT",
+    headers: myHeaders,
+    body: formData,
+    redirect: "follow",
+  };
+
+  try {
+    const response = await fetch(endpoint, requestOptions);
+    return responseValidator(response, true);
+  } catch (error) {
+    return apiError(error);
+  }
+};
+
 export const deleteAnnouncement = async (id) => {
   const endpoint = `${URL}/announcements/${id}`;
   const token = await getAuthToken();

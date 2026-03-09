@@ -29,7 +29,7 @@ export default function Popuplist({ children, user, handler }) {
                 <EllipsisVertical />
             </button>
 
-            <div ref={ref} className={`bg-white items-center justify-center absolute z-[9] min-w-[140px] rounded-lg top-7 right-0 border ${isOpen ? '' : 'hidden'}`}>
+            <div ref={ref} className={`bg-white items-center justify-center absolute z-[9] min-w-[140px] rounded-lg top-7 right-0 border shadow-lg ${isOpen ? '' : 'hidden'}`}>
                 {children}
             </div>
             {/* Uncomment and implement as needed

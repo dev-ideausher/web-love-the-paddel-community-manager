@@ -59,6 +59,11 @@ const MatchTable = () => {
       console.log("Fetching with params:", params);
       const res = await getMatchesList(params);
       console.log("Fetch matches response:", res);
+      
+      // Debug: Log each match status
+      res.data.results.forEach((match, index) => {
+        console.log(`Match ${index + 1} (${match.name}): status = "${match.status}"`);
+      });
 
       setOriginalData(res.data.results);
       setFilteredData(res.data.results);
@@ -179,8 +184,14 @@ const MatchTable = () => {
       console.log('Canceling match with ID:', id);
       const response = await cancelMatch(id);
       console.log('Cancel response:', response);
-      await fetchData();
-      setShowInactiveModal(false);
+      
+      if (response.status) {
+        await fetchData();
+        setShowInactiveModal(false);
+      } else {
+        const errorMsg = response.message || 'Failed to cancel match. Please try again.';
+        alert(errorMsg);
+      }
     } catch (error) {
       console.error("Failed to cancel match:", error);
       alert('Failed to cancel match. Please try again.');
@@ -347,7 +358,7 @@ const MatchTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item?.description || "N/A"}
+                      {item?.community?.name || item?.community || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -379,12 +390,14 @@ const MatchTable = () => {
                       >
                         Edit
                       </span>
-                      <span
-                        onClick={() => openInactiveModal(item)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
-                      >
-                        Cancel
-                      </span>
+                      {item?.status !== "cancelled" && (
+                        <span
+                          onClick={() => openInactiveModal(item)}
+                          className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
+                        >
+                          Cancel
+                        </span>
+                      )}
 
                       <span
                         onClick={() => openDeleteModal(item._id)}

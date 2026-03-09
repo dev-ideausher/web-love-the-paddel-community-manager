@@ -186,12 +186,16 @@ const CreateMatchModal = ({
   }, [errors]);
 
   const toggleSkill = (skill) => {
-    setFormData((prev) => ({
-      ...prev,
-      skillRange: prev.skillRange.includes(skill)
+    setFormData((prev) => {
+      const newSkillRange = prev.skillRange.includes(skill)
         ? prev.skillRange.filter((s) => s !== skill)
-        : [...prev.skillRange, skill],
-    }));
+        : [...prev.skillRange, skill];
+      console.log('Updated skill range:', newSkillRange);
+      return {
+        ...prev,
+        skillRange: newSkillRange,
+      };
+    });
   };
 
   const durationMap = {
@@ -404,6 +408,7 @@ const handleSubmit = (e) => {
           <Field label="Max Players" error={errors.maxPlayers}>
             <input
               type="number"
+              min="1"
               value={formData.maxPlayers}
               onChange={(e) => handleChange("maxPlayers", e.target.value)}
               className={`${inputStyle} ${errors.maxPlayers ? 'border-red-300' : ''}`}
@@ -416,6 +421,7 @@ const handleSubmit = (e) => {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">AED</span>
               <input
                 type="number"
+                min="0"
                 step="0.01"
                 value={formData.price}
                 onChange={(e) => handleChange("price", e.target.value)}

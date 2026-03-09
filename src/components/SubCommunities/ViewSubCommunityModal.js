@@ -76,9 +76,11 @@ const ViewSubCommunityModal = ({ isOpen, onClose, title, data = {} }) => {
               <p className="text-2xl font-semibold">{data?.members || 0}</p>
               <p className="text-sm text-gray-600">Members</p>
             </div>
-            <button className="text-base font-semibold text-buttontext">
-              View all
-            </button>
+            {data?.members > 0 && (
+              <button className="text-base font-semibold text-buttontext">
+                View all
+              </button>
+            )}
           </div>
 
           {/* Slideshow - Added Only Here */}

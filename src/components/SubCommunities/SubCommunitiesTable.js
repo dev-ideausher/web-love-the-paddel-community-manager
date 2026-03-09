@@ -709,7 +709,7 @@ const SubCommunitiesTable = () => {
                   <TableCell>
                     <StatusChip status={item?.status || "inactive"} />
                   </TableCell>
-                  <TableCell className="flex items-center">
+                  <TableCell className="relative">
                     <Popuplist>
                       <span
                         onClick={() => openViewModal(item)}

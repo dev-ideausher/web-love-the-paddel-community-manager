@@ -21,6 +21,7 @@ const EditSubCommunityModal = ({
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]); // existing URLs from initialData
   const [profilePic, setProfilePic] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
   const [socialLinks, setSocialLinks] = useState([
@@ -47,7 +48,7 @@ const EditSubCommunityModal = ({
         description: initialData.description || "",
         status: initialData.status || "active",
         location: initialData.location || "",
-        locationCoords: initialData.locationData?.position?.coordinates 
+        locationCoords: initialData.locationData
           ? { lng: initialData.locationData.position.coordinates[0], lat: initialData.locationData.position.coordinates[1] }
           : null,
       });
@@ -56,12 +57,10 @@ const EditSubCommunityModal = ({
         inputRef.value = initialData.location;
       }
       setImages([]);
-      // Show existing images as previews
-      if (initialData.images && Array.isArray(initialData.images) && initialData.images.length > 0) {
-        setImagePreviews(initialData.images);
-      } else {
-        setImagePreviews([]);
-      }
+      // Show existing images as previews and track them separately
+      const existing = Array.isArray(initialData.images) ? initialData.images.slice() : [];
+      setExistingImages(existing);
+      setImagePreviews(existing.slice()); // previews array contains existing URLs first
       setProfilePic(null);
       // Show existing profile pic
       if (initialData.profilePic) {
@@ -226,34 +225,65 @@ const EditSubCommunityModal = ({
       const files = Array.from(e.target.files);
       const newImages = [];
       const newPreviews = [];
+      const invalidFiles = [];
+      let exceededLimit = false;
+
+      // total currently in previews (existing + newly added)
+      const currentTotal = imagePreviews.length;
 
       files.forEach((file) => {
-        if (
-          file.type.startsWith("image/") &&
-          images.length + newImages.length <= 20
-        ) {
+        if (!file.type.startsWith("image/")) {
+          invalidFiles.push(file.name);
+        } else if (currentTotal + newPreviews.length < 20) {
           newImages.push(file);
           newPreviews.push(URL.createObjectURL(file));
+        } else {
+          exceededLimit = true;
         }
       });
 
-      setImages((prev) => [...prev, ...newImages]);
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      if (invalidFiles.length > 0) {
+        alert(`Invalid file(s): ${invalidFiles.join(", ")}. Please select only image files.`);
+      }
+
+      if (exceededLimit) {
+        setErrors((prev) => ({ ...prev, images: `Cannot upload more than 20 images. Please remove ${currentTotal + newPreviews.length - 20} image(s) to continue.` }));
+      }
+
+      if (newImages.length > 0) {
+        setImages((prev) => [...prev, ...newImages]);
+        setImagePreviews((prev) => [...prev, ...newPreviews]);
+      }
+
+      e.target.value = "";
     },
-    [images.length]
+    [imagePreviews.length, images.length]
   );
 
   const removeImage = useCallback((index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => {
-      const preview = prev[index];
-      // Only revoke if it's a blob URL (newly uploaded), not existing image URLs
-      if (preview && preview.startsWith('blob:')) {
+    setImagePreviews((prevPreviews) => {
+      const preview = prevPreviews[index];
+      // If this index corresponds to an existing image (before new uploads)
+      const existingCount = existingImages.length;
+
+      if (index < existingCount) {
+        // remove from existingImages
+        setExistingImages((prev) => prev.filter((_, i) => i !== index));
+      } else {
+        // remove from new images array (index - existingCount)
+        const newIndex = index - existingCount;
+        setImages((prev) => prev.filter((_, i) => i !== newIndex));
+      }
+
+      // revoke blob url if applicable
+      if (preview && typeof preview === "string" && preview.startsWith("blob:")) {
         URL.revokeObjectURL(preview);
       }
-      return prev.filter((_, i) => i !== index);
+
+      // return previews without the removed one
+      return prevPreviews.filter((_, i) => i !== index);
     });
-  }, []);
+  }, [existingImages.length]);
 
   const validateForm = useCallback(() => {
     const newErrors = {};
@@ -505,20 +535,20 @@ const EditSubCommunityModal = ({
                   accept="image/*"
                   onChange={handleImageSelect}
                   className="hidden"
-                  disabled={images.length >= 20 || isLoading}
+                  disabled={imagePreviews.length >= 20 || isLoading}
                 />
                 <label
                   htmlFor="image-upload"
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium cursor-pointer transition-all ${
-                    images.length >= 20 || isLoading
+                    imagePreviews.length >= 20 || isLoading
                       ? "text-gray-400 cursor-not-allowed bg-gray-100"
                       : "text-primary hover:bg-primary/10 hover:text-primary/90"
                   }`}
                 >
                   <Upload className="w-4 h-4" />
-                  {images.length >= 20
+                  {imagePreviews.length >= 20
                     ? "Max reached"
-                    : `Add images (${images.length}/20)`}
+                    : `Add images (${imagePreviews.length}/20)`}
                 </label>
               </div>
 
