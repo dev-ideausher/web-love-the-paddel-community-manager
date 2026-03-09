@@ -27,6 +27,7 @@ const EditAnnouncementModal = ({
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [subCommunities, setSubCommunities] = useState([]);
   const [loadingSubCommunities, setLoadingSubCommunities] = useState(false);
@@ -41,18 +42,19 @@ const EditAnnouncementModal = ({
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen && initialData) {
+      const existingImgs = Array.isArray(initialData.images) ? initialData.images : [];
+      
       setFormData((prev) => ({
         ...prev,
         title: initialData.title || "",
         description: initialData.description || "",
-        // handle both object and id forms
         subCommunity:
           initialData.subCommunity && typeof initialData.subCommunity === "object"
             ? initialData.subCommunity._id || initialData.subCommunity.id || ""
             : initialData.subCommunity || "",
-        images: initialData.images || [],
+        images: existingImgs,
       }));
-      // Reset new images when editing
+      setExistingImages(existingImgs);
       setImages([]);
       setImagePreviews([]);
       setErrors({});
@@ -106,11 +108,12 @@ const EditAnnouncementModal = ({
       const files = Array.from(e.target.files);
       const newImages = [];
       const newPreviews = [];
+      const totalCount = existingImages.length + images.length;
 
       files.forEach((file) => {
         if (
           file.type.startsWith("image/") &&
-          images.length + newImages.length <= 20
+          totalCount + newImages.length < 20
         ) {
           newImages.push(file);
           newPreviews.push(URL.createObjectURL(file));
@@ -120,7 +123,7 @@ const EditAnnouncementModal = ({
       setImages((prev) => [...prev, ...newImages]);
       setImagePreviews((prev) => [...prev, ...newPreviews]);
     },
-    [images.length]
+    [images.length, existingImages.length]
   );
 
   const removeImage = useCallback((index) => {
@@ -130,6 +133,10 @@ const EditAnnouncementModal = ({
       if (preview) URL.revokeObjectURL(preview);
       return prev.filter((_, i) => i !== index);
     });
+  }, []);
+
+  const removeExistingImage = useCallback((index) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const validateForm = useCallback(() => {
@@ -163,7 +170,8 @@ const EditAnnouncementModal = ({
 
       onSave({
         ...formData,
-        images: images.length > 0 ? images : null,
+        images,
+        existingImages,
       });
     },
     [formData, images, onSave, validateForm]
@@ -276,28 +284,51 @@ const EditAnnouncementModal = ({
                   accept="image/*"
                   onChange={handleImageSelect}
                   className="hidden"
-                  disabled={images.length >= 20 || isLoading}
+                  disabled={existingImages.length + images.length >= 20 || isLoading}
                 />
                 <label
                   htmlFor="image-upload"
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium cursor-pointer transition-all ${
-                    images.length >= 20 || isLoading
+                    existingImages.length + images.length >= 20 || isLoading
                       ? "text-gray-400 cursor-not-allowed bg-gray-100"
                       : "text-primary hover:bg-primary/10 hover:text-primary/90"
                   }`}
                 >
                   <Upload className="w-4 h-4" />
-                  {images.length >= 20
+                  {existingImages.length + images.length >= 20
                     ? "Max reached"
-                    : `Add images (${images.length}/20)`}
+                    : `Add images (${existingImages.length + images.length}/20)`}
                 </label>
               </div>
 
-              {/* Image Previews */}
+              {/* Existing Images */}
+              {existingImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {existingImages.map((img, index) => (
+                    <div key={`existing-${index}`} className="relative group">
+                      <img
+                        src={typeof img === 'string' ? img : img.url || img}
+                        alt={`Existing ${index + 1}`}
+                        className="object-cover w-full h-20 rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(index)}
+                        className="absolute flex items-center justify-center w-6 h-6 text-xs text-white transition-all bg-red-500 rounded-full opacity-0 -top-2 -right-2 hover:bg-red-600 group-hover:opacity-100"
+                        disabled={isLoading}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New Image Previews */}
               {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
+                    <div key={`new-${index}`} className="relative group">
                       <img
                         src={preview}
                         alt={`Preview ${index + 1}`}

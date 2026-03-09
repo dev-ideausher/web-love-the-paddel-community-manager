@@ -70,7 +70,12 @@ export const createAnnouncement = async (payload) => {
     formData.append("svgType", payload.svgType);
   }
   
-  if (payload.image) {
+  if (payload.images && Array.isArray(payload.images)) {
+    for (const img of payload.images) {
+      const compressed = await compressImage(img);
+      formData.append("image", compressed);
+    }
+  } else if (payload.image) {
     const compressed = await compressImage(payload.image);
     formData.append("image", compressed);
   }
@@ -105,9 +110,31 @@ export const updateAnnouncement = async (id, payload) => {
   if (payload.type) formData.append("type", payload.type);
   if (payload.svgType) formData.append("svgType", payload.svgType);
   
-  if (payload.image) {
-    const compressed = await compressImage(payload.image);
-    formData.append("image", compressed);
+  if (payload.images && Array.isArray(payload.images)) {
+    for (const img of payload.images) {
+      if (typeof img === 'string') {
+        formData.append("existingImages", img);
+      } else {
+        const compressed = await compressImage(img);
+        formData.append("image", compressed);
+      }
+    }
+  } else if (payload.image) {
+    if (Array.isArray(payload.image)) {
+      for (const img of payload.image) {
+        if (typeof img === 'string') {
+          formData.append("existingImages", img);
+        } else {
+          const compressed = await compressImage(img);
+          formData.append("image", compressed);
+        }
+      }
+    } else if (typeof payload.image === 'string') {
+      formData.append("existingImages", payload.image);
+    } else {
+      const compressed = await compressImage(payload.image);
+      formData.append("image", compressed);
+    }
   }
   if (payload.video) {
     formData.append("video", payload.video);

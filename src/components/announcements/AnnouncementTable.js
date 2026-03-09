@@ -281,7 +281,7 @@ const AnnounementTable = () => {
             dateCreated,
             members: 0,
             status: item.status || "active",
-            images: item.image ? [item.image] : [],
+            images: Array.isArray(item.image) ? item.image : (item.image ? [item.image] : []),
             svgType: item.svgType || "GENERAL",
             likes: item.likes || item.likedBy?.length || 0,
             subCommunity: item.communityId,
@@ -313,14 +313,14 @@ const AnnounementTable = () => {
       };
 
       if (newCommunityData.images?.length > 0) {
-        const file = newCommunityData.images[0];
+        const firstFile = newCommunityData.images[0];
         
-        if (file.type.startsWith("video/")) {
+        if (firstFile.type.startsWith("video/")) {
           payload.type = "video";
-          payload.video = file;
-        } else if (file.type.startsWith("image/")) {
+          payload.video = firstFile;
+        } else if (firstFile.type.startsWith("image/")) {
           payload.type = "image";
-          payload.image = file;
+          payload.images = newCommunityData.images;
         }
       }
 
@@ -447,19 +447,15 @@ const AnnounementTable = () => {
       const payload = {
         title: updatedData.title,
         description: updatedData.description,
-        type: "text",
       };
 
-      if (updatedData.images?.length > 0) {
-        const file = updatedData.images[0];
-        
-        if (file.type?.startsWith("video/")) {
-          payload.type = "video";
-          payload.video = file;
-        } else if (file.type?.startsWith("image/")) {
-          payload.type = "image";
-          payload.image = file;
-        }
+      const allImages = [...(updatedData.existingImages || []), ...(updatedData.images || [])];
+      
+      if (allImages.length > 0) {
+        payload.type = "image";
+        payload.images = allImages;
+      } else {
+        payload.type = "text";
       }
 
       const result = await updateAnnouncement(selectedItem._id, payload);
