@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from "react";
 import Button from "../Button";
 import { useRouter } from "next/router";
+import { toCamelCaseDisplay } from "@/Utilities/helpers";
 
 const PromoCard = ({ summary }) => {
   const router = useRouter();
   const metricsData = [
     {
       title: "totalSubCommunities",
+      displayTitle: toCamelCaseDisplay("totalSubCommunities"),
       value: summary?.totalSubCommunities || 0,
       image: "/icons/community.svg",
     },
     {
       title: "activeMatches",
+      displayTitle: toCamelCaseDisplay("activeMatches"),
       value: summary?.activeMatches || 0,
       image: "/icons/activematches.svg",
     },
     {
       title: "totalTransactions",
+      displayTitle: toCamelCaseDisplay("totalTransactions"),
       value: summary?.totalTransactions || 0,
       image: "/icons/totaltransactions.svg",
     },
@@ -35,7 +39,7 @@ const PromoCard = ({ summary }) => {
               </div>
               <div>
                 <h3 className="text-base font-normal text-neutral1">
-                  {metric.title}
+                  {metric.displayTitle}
                 </h3>
                 <h2 className="text-2xl text-[#374355] font-medium pt-1">
                   {metric.value}

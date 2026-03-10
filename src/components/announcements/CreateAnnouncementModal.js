@@ -3,6 +3,7 @@ import { X, Upload, ImageIcon, Trash2 } from "lucide-react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 import { getSubCommunitiesList } from "@/services/subCommunityServices";
+import { toast } from "react-toastify";
 
 const announcementTypes = [
   { value: "GENERAL", label: "General" },
@@ -87,6 +88,10 @@ const CreateAnnouncementModal = ({
         if (images.length + newImages.length < 20) {
           if (file.type.startsWith("image/")) {
             if (file.size > maxImageSize) {
+              toast.error(`Image "${file.name}" is too large. Maximum size is 10MB.`, {
+                position: "top-right",
+                autoClose: 5000,
+              });
               alert(`Image "${file.name}" is too large. Maximum size is 10MB.`);
               continue;
             }
@@ -95,12 +100,27 @@ const CreateAnnouncementModal = ({
             newPreviews.push(URL.createObjectURL(compressed));
           } else if (file.type.startsWith("video/")) {
             if (file.size > maxVideoSize) {
+              toast.error(`Video "${file.name}" is too large. Maximum size is 50MB.`, {
+                position: "top-right",
+                autoClose: 5000,
+              });
               alert(`Video "${file.name}" is too large. Maximum size is 50MB.`);
               continue;
             }
             newImages.push(file);
             newPreviews.push(URL.createObjectURL(file));
+          } else {
+            toast.error(`Invalid file type: "${file.name}". Please select only images or videos.`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
           }
+        } else {
+          toast.error(`Cannot upload more than 20 files. Please remove ${images.length + files.length - 20} file(s) to continue.`, {
+            position: "top-right",
+            autoClose: 5000,
+          });
+          break;
         }
       }
 

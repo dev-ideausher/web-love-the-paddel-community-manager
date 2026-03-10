@@ -1,5 +1,6 @@
 import { MapPin } from "lucide-react";
 import { Table, TableBody, TableCell, TableRow } from "./table";
+import { toCamelCaseDisplay } from "@/Utilities/helpers";
 const TableNoHeader = ({
   title = "Upcoming Matches",
   data = [],
@@ -16,6 +17,12 @@ const TableNoHeader = ({
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const formatMatchMode = (matchMode) => {
+    if (!matchMode) return "N/A";
+    // Use utility function for consistent camelCase display
+    return toCamelCaseDisplay(matchMode);
   };
 
   return (
@@ -49,7 +56,7 @@ const TableNoHeader = ({
                 </TableCell>
                 <TableCell>
                   <span className="px-2 py-1 text-sm text-green-800 bg-green-100 rounded-full">
-                    {match.matchMode || match.status}
+                    {formatMatchMode(match.matchMode) || match.status}
                   </span>
                 </TableCell>
               </TableRow>

@@ -295,8 +295,7 @@ const EditMatchModal = ({
             >
               <option value="">Select</option>
               <option value={"social"}>Social</option>
-              <option value={"competitive"}>Competitive</option>
-              <option value={"league"}>League</option>
+              <option value={"competitive"}>Friendly</option>
               <option value={"league"}>League</option>
               <option value={"matchplay"}>Matchplay</option>
             </select>

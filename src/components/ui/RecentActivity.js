@@ -1,15 +1,23 @@
 import Image from "next/image";
+import { toCamelCaseDisplay } from "@/Utilities/helpers";
 
 const RecentActivity = ({ activities }) => {
   const getActivityIcon = (type) => {
     const icons = {
       calendar: "/icons/notification1.svg",
       money: "/icons/notification2.svg",
-      member_joined: "/icons/notification3.svg",
+      memberJoined: "/icons/notification3.svg",
+      member_joined: "/icons/notification3.svg", // Keep for backward compatibility
       community: "/icons/notification3.svg",
       announcement: "/icons/notification4.svg",
     };
     return icons[type] || icons.community;
+  };
+
+  const formatActivityType = (type) => {
+    if (!type) return "Activity";
+    // Use utility function for consistent camelCase display
+    return toCamelCaseDisplay(type);
   };
 
   const TimeAgo = ({ timestamp }) => {

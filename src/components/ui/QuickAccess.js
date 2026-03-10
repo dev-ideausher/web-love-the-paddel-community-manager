@@ -1,30 +1,39 @@
 import React from "react";
+import { toCamelCaseDisplay } from "@/Utilities/helpers";
 
 const QuickAccess = ({ stats }) => {
   const cardList = [
     {
-      title: "Manage Communities",
-      subTitle: " Sub communities",
+      title: "manageCommunities",
+      displayTitle: toCamelCaseDisplay("manageCommunities"),
+      subTitle: "subCommunities",
+      displaySubTitle: toCamelCaseDisplay("subCommunities"),
       count: stats?.subCommunities || 0,
       icon: "/icons/manageCommunities.svg",
     },
     {
-      title: "View Matches",
+      title: "viewMatches",
+      displayTitle: toCamelCaseDisplay("viewMatches"),
       count: stats?.matches || 0,
-      subTitle: " Matches",
+      subTitle: "matches",
+      displaySubTitle: toCamelCaseDisplay("matches"),
       icon: "/icons/viewMatches.svg",
     },
     {
-      title: "Publish Updates",
+      title: "publishUpdates",
+      displayTitle: toCamelCaseDisplay("publishUpdates"),
       icon: "/icons/publishUpdates.svg",
       count: stats?.announcements || 0,
-      subTitle: " Announcements",
+      subTitle: "announcements",
+      displaySubTitle: toCamelCaseDisplay("announcements"),
     },
     {
-      title: "View Payment History",
+      title: "viewPaymentHistory",
+      displayTitle: toCamelCaseDisplay("viewPaymentHistory"),
       count: stats?.transactions || 0,
       icon: "/icons/paymentHistory.svg",
-      subTitle: " Transactions",
+      subTitle: "transactions",
+      displaySubTitle: toCamelCaseDisplay("transactions"),
     },
   ];
   return (
@@ -45,9 +54,9 @@ const QuickAccess = ({ stats }) => {
                 className="w-12 h-12 mr-4"
               />
               <div>
-                <p className="text-sm text-gray-600">{card.subTitle}</p>
+                <p className="text-sm text-gray-600">{card.displaySubTitle}</p>
                 <h1 className="text-lg font-semibold pb-[20px]">
-                  {card.title}
+                  {card.displayTitle}
                 </h1>
 
                 <h3 className="text-sm font-normal">{card.count} items</h3>

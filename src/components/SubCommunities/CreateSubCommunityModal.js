@@ -3,6 +3,7 @@ import { X, Upload, Image, Trash2 } from "lucide-react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { toast } from "react-toastify";
 
 const CreateSubCommunityModal = ({
   isOpen,
@@ -170,6 +171,10 @@ const CreateSubCommunityModal = ({
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
+        toast.error(`Invalid file: ${file.name}. Please select only image files.`, {
+          position: "top-right",
+          autoClose: 5000,
+        });
         alert(`Invalid file: ${file.name}. Please select only image files.`);
         e.target.value = "";
         return;
@@ -200,10 +205,18 @@ const CreateSubCommunityModal = ({
       });
 
       if (invalidFiles.length > 0) {
+        toast.error(`Invalid file(s): ${invalidFiles.join(", ")}. Please select only image files.`, {
+          position: "top-right",
+          autoClose: 5000,
+        });
         alert(`Invalid file(s): ${invalidFiles.join(", ")}. Please select only image files.`);
       }
 
       if (exceededLimit) {
+        toast.error(`Cannot upload more than 20 images. Please remove ${images.length + files.length - 20} image(s) to continue.`, {
+          position: "top-right",
+          autoClose: 5000,
+        });
         setErrors((prev) => ({ ...prev, images: `Cannot upload more than 20 images. Please remove ${images.length + files.length - 20} image(s) to continue.` }));
       }
 
@@ -261,6 +274,10 @@ const CreateSubCommunityModal = ({
 
       // Check image limit first
       if (images.length > 20) {
+        toast.error(`Cannot create community with more than 20 images. Please remove ${images.length - 20} image(s) first.`, {
+          position: "top-right",
+          autoClose: 5000,
+        });
         setErrors((prev) => ({ ...prev, images: `Cannot create community with more than 20 images. Please remove ${images.length - 20} image(s) first.` }));
         return;
       }
@@ -536,7 +553,14 @@ const CreateSubCommunityModal = ({
                   </label>
                 </div>
                 {errors.images && (
-                  <p className="mt-2 text-sm text-red-600 font-medium">{errors.images}</p>
+                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600 font-medium flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.images}
+                    </p>
+                  </div>
                 )}
 
                 {/* Image Previews */}

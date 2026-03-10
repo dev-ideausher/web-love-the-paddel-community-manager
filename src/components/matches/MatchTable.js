@@ -384,12 +384,14 @@ const MatchTable = () => {
                       >
                         View
                       </span>
-                      <span
-                        onClick={() => openEditModal(item)}
-                        className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
-                      >
-                        Edit
-                      </span>
+                      {item?.status !== "cancelled" && (
+                        <span
+                          onClick={() => openEditModal(item)}
+                          className="flex items-center w-full gap-2 px-3 py-2 text-sm font-normal text-black rounded-lg cursor-pointer hover:text-primary hover:bg-gray-100"
+                        >
+                          Edit
+                        </span>
+                      )}
                       {item?.status !== "cancelled" && (
                         <span
                           onClick={() => openInactiveModal(item)}

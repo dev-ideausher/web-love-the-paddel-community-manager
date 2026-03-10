@@ -69,7 +69,7 @@ const SettingsPanel = () => {
               value={isDataLoading ? "Loading..." : communityName}
               disabled
               className={inputStyle}
-              placeholder="No community name"
+              placeholder="Love the Padel"
             />
           </Field>
           <Field label="Email Address">

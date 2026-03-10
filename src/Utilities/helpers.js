@@ -264,3 +264,31 @@ export const downloadCSV = (columns, data, defaultFileName = "export.csv") => {
   }, 0);
 };
 
+// Convert text to camelCase display format
+export const toCamelCaseDisplay = (text) => {
+  if (!text) return "";
+  
+  // Handle snake_case, kebab-case, and camelCase
+  return text
+    .replace(/[_-]/g, ' ') // Replace underscores and hyphens with spaces
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
+};
+
+// Convert object keys to camelCase display format
+export const formatObjectKeysForDisplay = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  const formatted = {};
+  Object.keys(obj).forEach(key => {
+    formatted[key] = {
+      ...obj[key],
+      displayKey: toCamelCaseDisplay(key)
+    };
+  });
+  
+  return formatted;
+};
+
