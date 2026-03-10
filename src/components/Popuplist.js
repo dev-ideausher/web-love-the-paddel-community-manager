@@ -24,12 +24,12 @@ export default function Popuplist({ children, user, handler }) {
     }, []);
 
     return (
-        <div className='relative overflow-visible'>
+        <div className='relative overflow-visible z-[9999]'>
             <button className='w-full flex items-center rounded-full justify-center cursor-pointer' onClick={togglePopuplist}>
                 <EllipsisVertical />
             </button>
 
-            <div ref={ref} className={`bg-white items-center justify-center absolute z-[999] min-w-[140px] rounded-lg top-7 right-0 border shadow-lg ${isOpen ? '' : 'hidden'}`}>
+            <div ref={ref} className={`bg-white items-center justify-center absolute z-[9999] min-w-[140px] rounded-lg top-7 right-0 border shadow-lg ${isOpen ? '' : 'hidden'}`}>
                 {children}
             </div>
             {/* Uncomment and implement as needed

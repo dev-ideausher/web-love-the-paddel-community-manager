@@ -36,15 +36,19 @@ const TransactionCards = ({ summary }) => {
               key={index}
               className="flex flex-row items-start gap-5 p-4 bg-white min-w-52 rounded-3xl "
             >
-              <img
-                src={card.icon}
-                alt={card.title}
-                className="w-16 h-16 p-2 bg-gray-100 rounded-2xl"
-              />
+              {card.title !== "Total Revenue" && (
+                <img
+                  src={card.icon}
+                  alt={card.title}
+                  className="w-16 h-16 p-2 bg-gray-100 rounded-2xl"
+                />
+              )}
               <div>
                 <h1 className="text-sm font-light ">{card.title}</h1>
 
-                <h3 className="text-2xl font-semibold">{card.count} </h3>
+                <h3 className="text-2xl font-semibold">
+                  AED {typeof card.count === 'number' ? card.count.toFixed(2) : '0.00'}
+                </h3>
               </div>
             </div>
           ))}

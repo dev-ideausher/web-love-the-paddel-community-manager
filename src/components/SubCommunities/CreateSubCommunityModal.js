@@ -26,6 +26,7 @@ const CreateSubCommunityModal = ({
     { platform: "instagram", url: "" },
     { platform: "facebook", url: "" },
     { platform: "linkedin", url: "" },
+    { platform: "x", url: "" },
   ]);
   const [errors, setErrors] = useState({});
   const [showMap, setShowMap] = useState(true);
@@ -300,6 +301,7 @@ const CreateSubCommunityModal = ({
         { platform: "instagram", url: "" },
         { platform: "facebook", url: "" },
         { platform: "linkedin", url: "" },
+        { platform: "x", url: "" },
       ]);
       setErrors({});
       setSelectedPosition(null);
@@ -456,14 +458,14 @@ const CreateSubCommunityModal = ({
                   {socialLinks.map((link) => (
                     <div key={link.platform}>
                       <label className="block mb-1 text-xs text-gray-600 capitalize">
-                        {link.platform}
+                        {link.platform === 'x' ? 'X (Twitter)' : link.platform}
                       </label>
                       <input
                         type="url"
                         value={link.url}
                         onChange={(e) => handleSocialLinkChange(link.platform, e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={`https://${link.platform}.com/yourprofile`}
+                        placeholder={link.platform === 'x' ? 'https://x.com/yourprofile' : `https://${link.platform}.com/yourprofile`}
                         disabled={isLoading}
                       />
                     </div>

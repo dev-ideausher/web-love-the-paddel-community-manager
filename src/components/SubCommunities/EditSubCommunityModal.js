@@ -28,6 +28,7 @@ const EditSubCommunityModal = ({
     { platform: "instagram", url: "" },
     { platform: "facebook", url: "" },
     { platform: "linkedin", url: "" },
+    { platform: "x", url: "" },
   ]);
   const [errors, setErrors] = useState({});
   const [mapCenter, setMapCenter] = useState({ lat: 28.6139, lng: 77.2090 });
@@ -74,6 +75,7 @@ const EditSubCommunityModal = ({
           { platform: "instagram", url: "" },
           { platform: "facebook", url: "" },
           { platform: "linkedin", url: "" },
+          { platform: "x", url: "" },
         ];
         initialData.socialLinks.forEach(link => {
           const index = loadedLinks.findIndex(l => l.platform === link.platform);
@@ -87,6 +89,7 @@ const EditSubCommunityModal = ({
           { platform: "instagram", url: "" },
           { platform: "facebook", url: "" },
           { platform: "linkedin", url: "" },
+          { platform: "x", url: "" },
         ]);
       }
       setErrors({});
@@ -472,14 +475,14 @@ const EditSubCommunityModal = ({
                 {socialLinks.map((link) => (
                   <div key={link.platform}>
                     <label className="block mb-1 text-xs text-gray-600 capitalize">
-                      {link.platform}
+                      {link.platform === 'x' ? 'X (Twitter)' : link.platform}
                     </label>
                     <input
                       type="url"
                       value={link.url}
                       onChange={(e) => handleSocialLinkChange(link.platform, e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder={`https://${link.platform}.com/yourprofile`}
+                      placeholder={link.platform === 'x' ? 'https://x.com/yourprofile' : `https://${link.platform}.com/yourprofile`}
                       disabled={isLoading}
                     />
                   </div>

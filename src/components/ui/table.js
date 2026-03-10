@@ -3,7 +3,7 @@ import * as React from "react"
 
 
 const Table = React.forwardRef(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto" style={{borderRadius: "16px 16px 0 0 "}}>
+  <div className="relative w-full overflow-visible" style={{borderRadius: "16px 16px 0 0 "}}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}

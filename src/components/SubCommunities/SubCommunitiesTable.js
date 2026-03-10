@@ -312,7 +312,7 @@ const SubCommunitiesTable = () => {
       }
 
       // Add socialLinks only if they have URLs and valid platforms
-      const validPlatforms = ['instagram', 'facebook', 'linkedin'];
+      const validPlatforms = ['instagram', 'facebook', 'linkedin', 'x'];
       if (newCommunityData.socialLinks && newCommunityData.socialLinks.length > 0) {
         const validSocialLinks = newCommunityData.socialLinks
           .filter(link => 
@@ -495,7 +495,7 @@ const SubCommunitiesTable = () => {
       }
 
       // Add social links if provided and valid
-      const validPlatforms = ['instagram', 'facebook', 'linkedin'];
+      const validPlatforms = ['instagram', 'facebook', 'linkedin', 'x'];
       if (updatedData.socialLinks && updatedData.socialLinks.length > 0) {
         const validSocialLinks = updatedData.socialLinks
           .filter(link => 
