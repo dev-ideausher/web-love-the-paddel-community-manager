@@ -56,7 +56,7 @@ export const getAnnouncementsList = async (payload) => {
 };
 
 export const createAnnouncement = async (payload) => {
-  const endpoint = `/api/proxy/announcements/`;
+  const endpoint = `${URL}/announcements`;
   const token = await getAuthToken();
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${token}`);
@@ -81,6 +81,9 @@ export const createAnnouncement = async (payload) => {
   }
   if (payload.video) {
     formData.append("video", payload.video);
+  }
+  if (payload.thumbnail) {
+    formData.append("thumbnail", payload.thumbnail);
   }
 
   const requestOptions = {

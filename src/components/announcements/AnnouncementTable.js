@@ -301,6 +301,37 @@ const AnnounementTable = () => {
     fetchData();
   }, [fetchData]);
 
+  const extractVideoThumbnail = (videoFile) =>
+    new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      const url = URL.createObjectURL(videoFile);
+      video.src = url;
+
+      const capture = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 240;
+        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob], "thumbnail.jpg", { type: "image/jpeg" })),
+          "image/jpeg",
+          0.8
+        );
+      };
+
+      video.addEventListener("canplay", () => {
+        video.pause();
+        capture();
+      }, { once: true });
+
+      video.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      video.load();
+    });
+
   const handleCreateCommunity = async (newCommunityData) => {
     setIsProcessing(true);
     try {
@@ -314,16 +345,21 @@ const AnnounementTable = () => {
 
       if (newCommunityData.images?.length > 0) {
         const firstFile = newCommunityData.images[0];
+        console.log("first file type:", firstFile.type);
         
         if (firstFile.type.startsWith("video/")) {
           payload.type = "video";
           payload.video = firstFile;
+          const thumbnail = await extractVideoThumbnail(firstFile);
+          console.log("thumbnail generated:", thumbnail ? `File: ${thumbnail.name} (${thumbnail.size} bytes)` : null);
+          if (thumbnail) payload.thumbnail = thumbnail;
         } else if (firstFile.type.startsWith("image/")) {
           payload.type = "image";
           payload.images = newCommunityData.images;
         }
       }
 
+      console.log("payload being sent:", { ...payload, video: payload.video?.name, thumbnail: payload.thumbnail?.name || null });
       const result = await createAnnouncement(payload);
       
       if (result.status) {
