@@ -11,6 +11,8 @@ const announcementTypes = [
   { value: "EVENT", label: "Event" },
   { value: "TOURNAMENT", label: "Tournament" },
 ];
+const LoveThePaddel = "69523e5ce4e6606aa7ac3d5b";
+
 const CreateAnnouncementModal = ({
   isOpen,
   onClose,
@@ -289,7 +291,7 @@ const CreateAnnouncementModal = ({
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Sub Community *
+                Community *
               </label>
 
               <select
@@ -303,9 +305,11 @@ const CreateAnnouncementModal = ({
                 disabled={isLoading || loadingSubCommunities}
               >
                 <option value="" disabled>
-                  {loadingSubCommunities ? "Loading..." : "Select a sub community"}
+                  {loadingSubCommunities ? "Loading..." : "Select a community"}
                 </option>
-
+                <option value={LoveThePaddel}>
+                  Love The Paddel
+                </option>
                 {subCommunities.map((option) => (
                   <option key={option._id} value={option._id}>
                     {option.name}
