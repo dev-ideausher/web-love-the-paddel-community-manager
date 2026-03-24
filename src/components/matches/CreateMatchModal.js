@@ -19,7 +19,7 @@ const EMPTY_FORM = {
   location: "",
 };
 
-const SKILLS = ["E", "D", "D+", "C-", "C+", "B-", "B", "B+", "A"];
+const SKILLS = ["E", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A"];
 
 const CreateMatchModal = ({
   subCommunities = [],
