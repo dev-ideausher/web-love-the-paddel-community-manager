@@ -12,6 +12,7 @@ export const MATCH_SKILL_LEVELS = [
   "B",
   "B+",
   "A",
+  "C"
 ];
 
 const ALLOWED = new Set(MATCH_SKILL_LEVELS);
