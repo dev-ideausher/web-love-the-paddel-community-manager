@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import Button from "../Button";
 import { ClipLoader } from "react-spinners";
-import { GoogleMap, Marker, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
+import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import {
+  MATCH_SKILL_LEVELS,
+  coerceMatchSkills,
+} from "@/constants/matchSkills";
 
 const EMPTY_FORM = {
   name: "",
@@ -18,8 +23,6 @@ const EMPTY_FORM = {
   price: "",
   location: "",
 };
-
-const SKILLS = ["E", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A"];
 
 const CreateMatchModal = ({
   subCommunities = [],
@@ -42,10 +45,7 @@ const CreateMatchModal = ({
     country: ""
   });
   
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries: ["places"],
-  });
+  const { isLoaded } = useGoogleMaps();
 
   useEffect(() => {
     if (isOpen) {
@@ -251,7 +251,7 @@ const handleSubmit = (e) => {
     endTime: new Date(`${dateStr}T${formData.endTime}:00`).toISOString(),
     matchMode: formData.matchMode,
     currentVerificationStatus: formData.matchType,
-    skills: formData.skillRange,
+    skills: coerceMatchSkills(formData.skillRange),
     duration: durationMap[formData.duration],
     playersRequired: Number(formData.maxPlayers),
     price: Number(formData.price),
@@ -363,7 +363,7 @@ const handleSubmit = (e) => {
 
           <Field label="Skill Level Range">
             <div className="flex flex-wrap gap-2">
-              {SKILLS.map((skill) => {
+              {MATCH_SKILL_LEVELS.map((skill) => {
                 const selected = formData.skillRange.includes(skill);
 
                 return (

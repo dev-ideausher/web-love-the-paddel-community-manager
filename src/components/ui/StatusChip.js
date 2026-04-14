@@ -2,6 +2,11 @@ import { Dot, DotIcon } from "lucide-react";
 import React from "react";
 
 const StatusChip = ({ status, className = "" }) => {
+  const statusKey =
+    typeof status === "string" && status.trim() !== ""
+      ? status.trim().toLowerCase()
+      : "inactive";
+
   const baseStyles =
     " gap-1 px-2 py-1 rounded-md text-xs font-medium ring-1 ring-inset shadow-sm transition-all duration-200 hover:scale-[1.02]";
 
@@ -19,11 +24,11 @@ const StatusChip = ({ status, className = "" }) => {
   };
 
   const statusStyle =
-    statusStyles[status] ||
+    statusStyles[statusKey] ||
     "bg-gray-50/80 text-gray-800 ring-gray-200/50 hover:bg-gray-100  shadow-gray-100/50";
 
-  const dotClass = statusStyles[status]
-    ? statusStyles[status]
+  const dotClass = statusStyles[statusKey]
+    ? statusStyles[statusKey]
         .replace(/bg-|text-|ring-|hover:bg-|hover:text-|shadow-/g, "")
         .split(" ")
         .filter(Boolean)[1] || "text-gray-500"
@@ -35,7 +40,7 @@ const StatusChip = ({ status, className = "" }) => {
     >
       <div className="flex items-center">
         {" "}
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
       </div>
     </div>
   );

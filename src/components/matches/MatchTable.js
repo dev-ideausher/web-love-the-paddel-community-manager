@@ -23,7 +23,6 @@ import StatusChip from "../ui/StatusChip";
 import {
   cancelMatch,
   createMatch,
-  createMatche,
   deleteMatch,
   editMatch,
   getMatchesList,
@@ -31,6 +30,16 @@ import {
 import { formatDate } from "@/Utilities/helpers";
 import { getSubCommunitiesList } from "@/services/subCommunityServices";
 import { GoogleMapsProvider } from "@/contexts/GoogleMapsContext";
+
+const communityDisplay = (community) => {
+  if (community == null) return "N/A";
+  if (typeof community === "string") return community || "N/A";
+  if (typeof community === "object") {
+    const name = community.name ?? community.title;
+    if (name != null && String(name).trim() !== "") return String(name);
+  }
+  return "N/A";
+};
 
 const MatchTable = () => {
   const [isClient, setIsClient] = useState(false);
@@ -59,14 +68,16 @@ const MatchTable = () => {
       console.log("Fetching with params:", params);
       const res = await getMatchesList(params);
       console.log("Fetch matches response:", res);
-      
-      // Debug: Log each match status
-      res.data.results.forEach((match, index) => {
-        console.log(`Match ${index + 1} (${match.name}): status = "${match.status}"`);
-      });
 
-      setOriginalData(res.data.results);
-      setFilteredData(res.data.results);
+      const raw = res?.data;
+      const results = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.results)
+          ? raw.results
+          : [];
+
+      setOriginalData(results);
+      setFilteredData(results);
     } catch (error) {
       console.error("Failed to fetch matches:", error);
     } finally {
@@ -358,7 +369,7 @@ const MatchTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className="block max-w-xs text-sm font-normal truncate text-black-3">
-                      {item?.community?.name || item?.community || "N/A"}
+                      {communityDisplay(item?.community)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -368,7 +379,7 @@ const MatchTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm font-normal text-black-3">
-                      {item?.players?.length || 0}/{item.playersRequired}
+                      {item?.players?.length || 0}/{item?.playersRequired ?? "—"}
                     </span>
                   </TableCell>
                   <TableCell>

@@ -3,6 +3,16 @@ import { useEffect, useState } from "react";
 import Button from "../Button";
 import { formatDate, formatTime } from "@/Utilities/helpers";
 
+const formatSkillsText = (skills) => {
+  if (skills == null) return "";
+  if (typeof skills === "string") return skills;
+  if (!Array.isArray(skills)) return "";
+  return skills
+    .map((s) => (typeof s === "string" ? s : s?.name ?? ""))
+    .filter(Boolean)
+    .join(", ");
+};
+
 const ViewMatchModal = ({ isOpen, onClose, data = {} }) => {
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [playerList, setPlayerList] = useState([]);
@@ -41,8 +51,9 @@ const ViewMatchModal = ({ isOpen, onClose, data = {} }) => {
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 mr-2 text-gray-600" />
                   <span>
-                    {data?.location?.country + ", " + data?.location?.state ||
-                      "No location specified"}
+                    {[data?.location?.country, data?.location?.state]
+                      .filter((v) => v != null && String(v).trim() !== "")
+                      .join(", ") || "No location specified"}
                   </span>
                 </div>
                 <p className="ml-6 text-xs text-gray-400">
@@ -55,7 +66,9 @@ const ViewMatchModal = ({ isOpen, onClose, data = {} }) => {
 
                 <div className="flex flex-wrap items-center gap-1">
                   <CircleCheckBig className="w-4 h-4 text-green-500" />
-                  <span>{(data?.skills || []).join(", ") || "All levels"}</span>
+                  <span>
+                    {formatSkillsText(data?.skills) || "All levels"}
+                  </span>
                 </div>
 
                 <p>
@@ -69,7 +82,12 @@ const ViewMatchModal = ({ isOpen, onClose, data = {} }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">
-                  {data?.players?.length + "/" + data?.playersRequired || "N/A"}
+                  {`${data?.players?.length ?? 0}/${
+                    data?.playersRequired != null &&
+                    ["string", "number"].includes(typeof data.playersRequired)
+                      ? data.playersRequired
+                      : "—"
+                  }`}
                 </p>
                 <p className="text-sm text-gray-600">Players</p>
               </div>

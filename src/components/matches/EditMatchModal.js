@@ -4,6 +4,10 @@ import { ClipLoader } from "react-spinners";
 import { Cross, CrossIcon } from "lucide-react";
 import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import {
+  MATCH_SKILL_LEVELS,
+  coerceMatchSkills,
+} from "@/constants/matchSkills";
 
 const EditMatchModal = ({
   isOpen,
@@ -34,6 +38,10 @@ const EditMatchModal = ({
       address: "",
       lat: null,
       lng: null,
+      country: "",
+      city: "",
+      state: "",
+      postalCode: "",
     },
   });
   const { isLoaded } = useGoogleMaps();
@@ -50,11 +58,15 @@ const EditMatchModal = ({
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results?.[0]) {
-        handleChange("location", {
-          address: results[0].formatted_address,
-          lat,
-          lng,
-        });
+        setFormData((prev) => ({
+          ...prev,
+          location: {
+            ...prev.location,
+            address: results[0].formatted_address,
+            lat,
+            lng,
+          },
+        }));
       }
     });
   };
@@ -68,11 +80,15 @@ const EditMatchModal = ({
     const lat = place.geometry.location.lat();
     const lng = place.geometry.location.lng();
 
-    handleChange("location", {
-      address: place.formatted_address,
-      lat,
-      lng,
-    });
+    setFormData((prev) => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        address: place.formatted_address,
+        lat,
+        lng,
+      },
+    }));
 
     setSelectedPosition({ lat, lng });
     setMapCenter({ lat, lng });
@@ -90,7 +106,6 @@ const EditMatchModal = ({
     }
   };
 
-  const SKILLS = ["A", "B+", "B", "B-", "C-", "C", "C strong", "C+", "D", "D+"];
   const toggleSkill = (skill) => {
     const newSkillRange = formData.skillRange.includes(skill)
       ? formData.skillRange.filter((s) => s !== skill)
@@ -99,7 +114,6 @@ const EditMatchModal = ({
   };
 
   useEffect(() => {
-    console.log(initialData);
     setSubcommunities(subCommunitiesData);
     if (isOpen && initialData) {
       const locationData = initialData.location || {};
@@ -133,7 +147,7 @@ const EditMatchModal = ({
         duration: displayDuration,
         matchType: initialData.currentVerificationStatus || "",
         matchMode: initialData.matchMode || "",
-        skillRange: initialData.skills || [],
+        skillRange: coerceMatchSkills(initialData.skills || []),
         date: initialData.date || "",
         startTime: startTimeValue,
         endTime: endTimeValue,
@@ -143,6 +157,10 @@ const EditMatchModal = ({
           address: locationData.streetAddress || "",
           lat,
           lng,
+          country: locationData.country || "",
+          city: locationData.city || "",
+          state: locationData.state || "",
+          postalCode: locationData.postalCode || "",
         },
       });
     }
@@ -178,24 +196,36 @@ const EditMatchModal = ({
       "48 hours": "48hours",
     };
     
-    // Transform form data to API format
+    const communityId =
+      typeof formData.subCommunity === "string"
+        ? formData.subCommunity
+        : formData.subCommunity?._id;
+
+    // Transform form data to API format (align with create + backend Joi)
     const apiPayload = {
       name: formData.matchName,
       description: formData.matchName,
-      community: formData.subCommunity?._id,
+      community: communityId,
       location: {
-        streetAddress: formData.location.address,
+        streetAddress: formData.location.address || "",
+        country: formData.location.country || "",
+        city: formData.location.city || "",
+        state: formData.location.state || "",
+        postalCode: formData.location.postalCode || "",
         position: {
           type: "Point",
-          coordinates: [formData.location.lng, formData.location.lat]
-        }
+          coordinates: [
+            formData.location.lng ?? 0,
+            formData.location.lat ?? 0,
+          ],
+        },
       },
       date: formData.date,
       startTime: `${formData.date.split('T')[0]}T${formData.startTime}:00.000Z`,
       endTime: `${formData.date.split('T')[0]}T${formData.endTime}:00.000Z`,
       playersRequired: parseInt(formData.maxPlayers),
       price: parseFloat(formData.price),
-      skills: formData.skillRange,
+      skills: coerceMatchSkills(formData.skillRange),
       matchMode: formData.matchMode,
       duration: durationMap[formData.duration] || formData.duration,
       currentVerificationStatus: formData.matchType,
@@ -238,7 +268,11 @@ const EditMatchModal = ({
 
           <Field label="Community">
             <select
-              value={formData.subCommunity?._id || ""}
+              value={
+                typeof formData.subCommunity === "string"
+                  ? formData.subCommunity
+                  : formData.subCommunity?._id || ""
+              }
               onChange={(e) => {
                 const value = e.target.value;
                 const apiSubCommunities = subCommunities?.results || subCommunities || [];
@@ -303,7 +337,7 @@ const EditMatchModal = ({
 
           <Field label="Skill Level Range">
             <div className="flex flex-wrap gap-2">
-              {SKILLS.map((skill) => {
+              {MATCH_SKILL_LEVELS.map((skill) => {
                 const selected = formData.skillRange.includes(skill);
 
                 return (

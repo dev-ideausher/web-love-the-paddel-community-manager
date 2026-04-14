@@ -5,6 +5,7 @@ import {
   responseValidator,
   URL,
 } from "./api/helper";
+import { coerceMatchSkills } from "@/constants/matchSkills";
 
 export const getMatchesList = async (payload) => {
   let endpoint = `${URL}/communities/matches`;
@@ -141,10 +142,20 @@ export const editMatch = async (id, payload) => {
   myHeaders.append("Authorization", `Bearer ${token}`);
   myHeaders.append("Content-Type", "application/json");
 
+  const body =
+    payload && typeof payload === "object"
+      ? {
+          ...payload,
+          ...(Object.prototype.hasOwnProperty.call(payload, "skills")
+            ? { skills: coerceMatchSkills(payload.skills) }
+            : {}),
+        }
+      : payload;
+
   const requestOptions = {
     method: "PATCH",
     headers: myHeaders,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
     redirect: "follow",
   };
 
